@@ -33,12 +33,12 @@ body {
   padding: env(safe-area-inset-top) 20px calc(env(safe-area-inset-bottom) + 20px);
   min-height: 100vh; overscroll-behavior-y: none;
   -webkit-user-select: none; user-select: none;
+  overflow-x: hidden;
 }
 
 h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 .subtitle { text-align:center; font-size:13px; color:var(--sub); margin:8px 0 24px; line-height:1.5; }
 
-/* 상태 메시지창 수정 */
 .status {
   text-align:center; padding:16px; border-radius:18px; 
   background: rgba(163, 177, 138, 0.15);
@@ -46,11 +46,12 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
   line-height: 1.6; color: var(--text);
 }
 @media (prefers-color-scheme: dark) {
-  .status { background: rgba(255, 255, 255, 0.05); }
+  .status { background: rgba(255, 255, 255, 0.08); }
 }
 .status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
 
 .card {
+  touch-action: manipulation;
   background:var(--card); border-radius:24px; padding:22px; margin-bottom:16px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.04); cursor: pointer; border: 1.5px solid transparent;
   transition: transform 0.2s ease, background-color 0.2s ease;
@@ -80,37 +81,35 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 input, button { width:100%; padding:14px; border-radius:14px; margin-top:8px; font-size:16px; border:none; outline: none; }
 input { border: 1.5px solid #eee; background: #fafafa; color: var(--text); -webkit-user-select: text; user-select: text; }
 
-/* 날짜 입력창 및 수량 입력창 디자인 개선 */
 input[type="date"], input[type="number"] {
-  -webkit-appearance: none; /* iOS 기본 스타일 제거 */
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.02);
   text-align: left;
-  padding: 12px 16px;
-  font-size: 15px;
+  padding: 14px 16px;
+  font-size: 16px;
   color: var(--text);
-  margin-top: 6px;
+  margin-top: 8px;
+  display: block;
 }
 
 @media (prefers-color-scheme: dark) {
   input[type="date"], input[type="number"] {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
   }
 }
 
-/* 날짜 입력창 특유의 아이콘과 패딩 조정 */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.5); /* 아이콘 색상을 서브 텍스트 컬러와 맞춤 */
-}
+input[type="date"]::-webkit-date-and-time-value { text-align: left; min-height: 1.5em; }
 
-@media (prefers-color-scheme: dark) { input { background: #333; border-color: #444; } }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; margin-top: 15px; }
 button:active { opacity: 0.7; }
 
 footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; padding-bottom: 30px; }
-
 .overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:24px; z-index:999; }
 </style>
 </head>
@@ -137,6 +136,9 @@ footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; p
 </footer>
 
 <script>
+
+const STORAGE_VERSION = 1;
+
 const supplements = [
   { key: "pro", name: "유산균", icon: '🦠', desc: "아침 공복, 따뜻한 물과 함께" },
   { key: "vit", name: "종합비타민", icon: '💊', desc: "점심 식후, 잊지 말고 챙기기" },
@@ -160,29 +162,31 @@ function getDiffDays(dateStr) {
 function get(k) { return JSON.parse(localStorage.getItem('minty_' + k)); }
 function set(k, v) { localStorage.setItem('minty_' + k, JSON.stringify(v)); }
 
+if (!localStorage.getItem("minty_version")) {
+  localStorage.setItem("minty_version", STORAGE_VERSION);
+}
+
 function render() {
   let warnCount = 0;
   const wrap = document.getElementById("cards");
   wrap.innerHTML = "";
   
   supplements.forEach(s => {
-    /* render 함수 내부 supplements.forEach 안의 로직 수정 */
-const d = get(s.key);
-let remain = "-"; // 기본값
-let historyHtml = "";
+    const d = get(s.key);
+    let remain = "-";
+    let historyHtml = "";
 
-if (d && d.total !== undefined && d.lastDate) {
-  const diff = getDiffDays(d.lastDate);
-  // 만약 계산 결과가 숫자가 아니면 0으로 처리
-  const calculatedRemain = Math.max(d.total - diff, 0);
-  remain = isNaN(calculatedRemain) ? "-" : calculatedRemain;
-  
-  if (remain !== "-" && remain <= 60) warnCount++;
-  
- }  
-    if (d) {
-      remain = Math.max(d.total - getDiffDays(d.lastDate), 0);
-      if (remain <= 60) warnCount++;
+    if (d && d.lastDate) {
+      const totalAmount = Number(d.total) || 0;
+      const diff = getDiffDays(d.lastDate);
+      const calculatedRemain = Math.max(totalAmount - diff, 0);
+      remain = isNaN(calculatedRemain) ? 0 : calculatedRemain;
+      
+    const isManaged = d && typeof d.total === "number" && d.total > 0;
+    const isWarn = isManaged && remain <= 60;
+
+if (isWarn) warnCount++;
+
       if (d.history && d.history.length > 0) {
         historyHtml = `<div class="history-container">`;
         d.history.slice(0, 3).forEach(item => {
@@ -192,11 +196,13 @@ if (d && d.total !== undefined && d.lastDate) {
       }
     }
     
-    const isWarn = (remain !== "-" && remain <= 60);
     const card = document.createElement("div");
     card.className = `card ${isWarn ? 'warn' : ''}`;
     
     card.onclick = (e) => {
+      setTimeout(() => {
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+}, 150);
       if (e.target.closest('.edit-form')) return;
       const isOpen = card.classList.contains('open');
       document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
@@ -228,17 +234,23 @@ if (d && d.total !== undefined && d.lastDate) {
     wrap.appendChild(card);
   });
   
-  const calmMsgs = [
-    "🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "💚 오늘의 하루는 유난히 너에게 다정할거야",
-    "💫 민티야, 오늘도 잘 챙겨 먹자", "✨ 가장 소중한 건 바로 너", "🌸 네가 걷는 모든 길에 꽃이 피길",
-    "🐋 민티의 하루가 잔잔한 윤슬처럼 빛나길"
-  ];
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
-  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : calmMsgs[Math.floor(Math.random() * calmMsgs.length)];
+  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : getDailyMessage();
   
   const now = new Date();
   document.getElementById("today").innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+}
+
+function getDailyMessage() {
+  const key = "minty_msg_" + getTodayKST();
+  let msg = localStorage.getItem(key);
+  if (!msg) {
+    const msgs = ["🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "💚 오늘의 하루는 유난히 너에게 다정할거야", "💫 민티야, 오늘도 잘 챙겨 먹자", "✨ 가장 소중한 건 바로 너", "🌸 네가 걷는 모든 길에 꽃이 피길", "🐋 민티의 하루가 잔잔한 윤슬처럼 빛나길"];
+    msg = msgs[Math.floor(Math.random() * msgs.length)];
+    localStorage.setItem(key, msg);
+  }
+  return msg;
 }
 
 function save(k, e) {
@@ -264,7 +276,7 @@ function save(k, e) {
 
   set(k, prev);
   render();
-  // 저장 후 카드 닫기
+
   setTimeout(() => {
     document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
   }, 300);
