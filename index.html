@@ -123,7 +123,7 @@ function render() {
     const d = get(s.key) || { total: 0, lastDate: todayKST, history: [] };
     const diff = getDiffDays(d.lastDate);
     const remain = Math.max(d.total - diff, 0);
-    const isWarn = remain <= 60;
+    const isWarn = remain <= 30;
     if (isWarn) warnCount++;
 
     // 히스토리 HTML 생성
