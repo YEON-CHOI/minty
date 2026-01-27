@@ -54,4 +54,60 @@ function save(k, e) {
   document.activeElement?.blur();
 
   const qInput = document.getElementById(k+"q");
-  const tInput = docume
+  const tInput = document.getElementById(k+"total");
+  const qVal = qInput.value.trim();
+  const tVal = tInput.value.trim();
+
+  if (qVal && tVal) {
+    alert("한 가지만 입력해주세요 💚");
+    return;
+  }
+
+  const today = getTodayKST();
+  const prev = get(k) || { total: 0, lastDate: today, history: [] };
+
+  // 실재고 보정
+  if (tVal !== "") {
+    const n = Number(tVal);
+    if (!Number.isInteger(n) || n < 0) {
+      alert("올바른 수량을 입력해주세요 💚");
+      return;
+    }
+    prev.total = n;
+    prev.lastDate = today;
+  }
+
+  // 구매 추가
+  else if (qVal !== "") {
+    const q = Number(qVal);
+    if (!Number.isInteger(q) || q <= 0) {
+      alert("올바른 수량을 입력해주세요 💚");
+      return;
+    }
+    const remain = Math.max(prev.total - getDiffDays(prev.lastDate), 0);
+    prev.total = remain + q;
+    prev.lastDate = today;
+    prev.history = [
+      { date: today, qty: q },
+      ...(prev.history || [])
+    ].slice(0, 10);
+  }
+
+  else {
+    alert("수량을 입력해주세요 💚");
+    return;
+  }
+
+  set(k, prev);
+  render();
+  showToast();
+  navigator.vibrate?.(10);
+
+  qInput.value = "";
+  tInput.value = "";
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+}
+
+</script>
+</body>
+</html>
