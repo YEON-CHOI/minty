@@ -312,7 +312,7 @@ function render() {
           <span class="title">${s.name}</span>
         </div>
         <div class="stock ${isWarn ? "warn" : ""}">
-          <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub); font-weight:normal">알</span>
+          <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub); font-weight:normal">개</span>
         </div>
       </div>
       <div class="desc">${s.desc}</div>
@@ -322,8 +322,8 @@ function render() {
         ${lastPurchase ? `<div class="last-purchase">📦 마지막 기록: ${lastPurchase}</div>` : ""}
         <div style="font-size:12px; color:var(--sub); margin-left:2px; margin-bottom:4px">새로운 구매 기록 입력</div>
         <input type="date" id="${s.key}d" value="${new Date().toISOString().split('T')[0]}" onclick="event.stopPropagation()">
-        <input type="number" placeholder="구매한 수량 (개 수)" id="${s.key}q" min="1" onclick="event.stopPropagation()">
-        <button onclick="save('${s.key}', event)">💚 기록 저장하기</button>
+        <input type="number" placeholder="구매 수량" id="${s.key}q" min="1" onclick="event.stopPropagation()">
+        <button onclick="save('${s.key}', event)">💚 챙겼어요</button>
       </div>
     `;
     wrap.appendChild(card);
@@ -333,7 +333,7 @@ function render() {
   st.className = "status" + (warnCount ? " warn" : "");
   st.innerText = warnCount 
     ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` 
-    : "😊 당분간은 마음 놓아도 괜찮아";
+    : "😊 오은 마음 놓아도 괜찮아";
   
   document.getElementById("today").innerText = formatDate(new Date()) + " 기준";
 }
