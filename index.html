@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>🌿 민티의 하루 🌿</title>
-
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#A3B18A" />
@@ -13,12 +12,76 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
-/* (스타일은 변경 없음 — 생략하지 않고 그대로 유지) */
+:root {
+  --bg:#F6F7F2; --card:#fff; --text:#2F3E34; --sub:#7A8B7A;
+  --accent:#A3B18A; --warn:#D9776C; --warn-strong:#C44536;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#1f2320; --card:#2a2f2b; --text:#e5e7e3; --sub:#aab0a5; }
+}
+* { box-sizing:border-box; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color:transparent; }
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  padding: env(safe-area-inset-top) 20px calc(env(safe-area-inset-bottom) + 20px);
+  min-height: 100vh; overscroll-behavior-y: none;
+  -webkit-user-select: none; user-select: none; overflow-x: hidden;
+}
+h1 { display: block; width: fit-content; margin: 30px auto 0; padding: 12px 28px; font-size: 32px; font-weight: 850; letter-spacing: -1px; background: rgba(163, 177, 138, 0.15); border-radius: 100px; color: var(--text); }
+.subtitle { text-align: center; font-size: 13px; color: var(--sub); margin: 8px 0 24px; }
+.status { text-align:center; padding:16px; border-radius:18px; background: rgba(163, 177, 138, 0.15); font-size:14px; margin-bottom:20px; transition: 0.3s ease; line-height: 1.6; }
+.status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
+.card { scroll-margin-top: 80px; background:var(--card); border-radius:24px; padding:22px; margin-bottom:16px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); cursor: pointer; border: 1.5px solid transparent; transition: transform 0.2s ease; }
+.card.warn { border: 1.5px solid var(--warn); }
+.card-header { display:flex; align-items:center; justify-content: space-between; }
+.icon-emoji { font-size: 32px; animation: breathe 3.2s ease-in-out infinite; display: inline-block; }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+.stock strong { font-size:26px; font-weight:700; color: var(--accent); }
+.stock.warn strong { color:var(--warn-strong); }
+
+/* 최근 이력 스타일 */
+.history-container { background: rgba(0,0,0,0.03); border-radius: 12px; padding: 12px; margin: 10px 0 15px; }
+@media (prefers-color-scheme: dark) { .history-container { background: rgba(255,255,255,0.05); } }
+.history-item { font-size: 12px; display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text); }
+
+.edit-form { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
+.card.open .edit-form { max-height: 800px; opacity: 1; margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(0,0,0,0.1); }
+
+/* 입력창 스타일 고정 */
+.date-display { background: rgba(0,0,0,0.04); color: var(--sub); padding: 14px; border-radius: 14px; font-size: 16px; margin-top: 8px; border: 1px solid rgba(0,0,0,0.05); }
+@media (prefers-color-scheme: dark) { .date-display { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); } }
+
+input, button { width:100%; padding:14px; border-radius:14px; margin-top:8px; font-size:16px; border:none; outline: none; }
+input { background: rgba(0,0,0,0.04); color: var(--text); border: 1px solid transparent; }
+input:focus { border: 1px solid var(--accent); }
+@media (prefers-color-scheme: dark) { input { background: rgba(255,255,255,0.06); } }
+
+button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; }
+.overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; visibility: hidden; transition: 0.4s ease; }
+.overlay.show { opacity: 1; visibility: visible; }
+@keyframes fadeInOut { 0% { opacity: 0; transform: translate(-50%, -60%); } 20%, 80% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -40%); } }
 </style>
 </head>
 <body>
 
-<!-- (HTML 구조 동일 — 생략 없음) -->
+<div id="overlay" class="overlay">
+  <div style="text-align:center; max-width:300px;">
+    <h2 style="font-size:34px; font-weight:850; margin-bottom:12px;">🌿 민티의 하루 🌿</h2>
+    <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">✍️ 작은 기록 속에 남기는 나의 온도</p>
+    <button onclick="start()">시작하기</button>
+  </div>
+</div>
+
+<h1>🌿 민티의 하루 🌿</h1>
+<div class="subtitle">오늘도 건강할 민티를 위해 😎</div>
+<div id="status" class="status"></div>
+<div id="cards"></div>
+
+<footer>
+  <div style="text-align:center; font-size:11px; color:var(--sub); margin-top:40px; padding-bottom:40px;">
+    숫자가 말하지 못하는 것들 <br>
+    <span id="today-footer" style="opacity:0.5;"></span>
+  </div>
+</footer>
 
 <script>
 const supplements = [
@@ -33,81 +96,131 @@ function getTodayKST() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function parseDate(str) {
-  const [y,m,d] = str.split('-').map(Number);
-  return new Date(y, m-1, d);
-}
-
 function getDiffDays(dateStr) {
   if (!dateStr) return 0;
-  const today = parseDate(getTodayKST());
-  const past = parseDate(dateStr);
-  return Math.max(Math.floor((today - past) / 86400000), 0);
+  const today = new Date();
+  const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const p = new Date(dateStr);
+  const pd = new Date(p.getFullYear(), p.getMonth(), p.getDate());
+  return Math.floor((t - pd) / 86400000);
 }
 
 function get(k){ return JSON.parse(localStorage.getItem('minty_'+k)); }
 function set(k,v){ localStorage.setItem('minty_'+k, JSON.stringify(v)); }
 
+function render() {
+  const wrap = document.getElementById("cards");
+  wrap.innerHTML = "";
+  let warnCount = 0;
+  const todayKST = getTodayKST();
+  const displayDate = todayKST.replace(/-/g, '. ') + '.';
+
+  supplements.forEach(s => {
+    const d = get(s.key) || { total: 0, lastDate: todayKST, history: [] };
+    const diff = getDiffDays(d.lastDate);
+    const remain = Math.max(d.total - diff, 0);
+    const isWarn = remain <= 60;
+    if (isWarn) warnCount++;
+
+    // 히스토리 HTML 생성
+    let historyHtml = "";
+    if (d.history && d.history.length > 0) {
+      historyHtml = `<div class="history-container">`;
+      d.history.slice(0, 3).forEach(h => {
+        historyHtml += `<div class="history-item"><span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span><span>${h.qty}개 추가</span></div>`;
+      });
+      historyHtml += `</div>`;
+    }
+
+    const card = document.createElement("div");
+    card.className = `card ${isWarn ? 'warn' : ''}`;
+    card.onclick = (e) => {
+      if (e.target.closest('.edit-form')) return;
+      const isOpen = card.classList.contains('open');
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+      if (!isOpen) card.classList.add('open');
+    };
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="icon-emoji">${s.icon}</span>
+          <span style="font-weight:700; font-size:17px;">${s.name}</span>
+        </div>
+        <div class="stock ${isWarn?'warn':''}"><strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span></div>
+      </div>
+      <div style="font-size:12px; color:var(--sub); margin:4px 0 14px;">${s.desc}</div>
+      <div class="edit-form">
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px;">최근 구매 이력 (최대 3건)</div>
+        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px; opacity:0.6;">아직 기록이 없어요. ✨</div>'}
+        
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
+        <div class="date-display">${displayDate}</div>
+        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
+        
+        <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
+        <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
+        <button onclick="save('${s.key}', event)">기록하기 💚</button>
+      </div>`;
+    wrap.appendChild(card);
+  });
+
+  const st = document.getElementById("status");
+  st.className = "status" + (warnCount ? " warn" : "");
+  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : "✨ 모든 영양제가 충분해요!";
+  document.getElementById("today-footer").innerText = displayDate;
+}
+
 function save(k, e) {
-  e.preventDefault();
-  e.stopPropagation();
-  document.activeElement?.blur();
-
-  const qInput = document.getElementById(k+"q");
-  const tInput = document.getElementById(k+"total");
-  const qVal = qInput.value.trim();
-  const tVal = tInput.value.trim();
-
-  if (qVal && tVal) {
-    alert("한 가지만 입력해주세요 💚");
-    return;
-  }
-
+  e.preventDefault(); e.stopPropagation();
+  const qVal = document.getElementById(k+"q").value;
+  const tVal = document.getElementById(k+"total").value;
   const today = getTodayKST();
   const prev = get(k) || { total: 0, lastDate: today, history: [] };
 
-  // 실재고 보정
+  if (qVal && tVal) { alert("한 가지만 입력해주세요 💚"); return; }
+  
   if (tVal !== "") {
-    const n = Number(tVal);
-    if (!Number.isInteger(n) || n < 0) {
-      alert("올바른 수량을 입력해주세요 💚");
-      return;
-    }
-    prev.total = n;
+    prev.total = Math.floor(Number(tVal));
     prev.lastDate = today;
-  }
-
-  // 구매 추가
-  else if (qVal !== "") {
-    const q = Number(qVal);
-    if (!Number.isInteger(q) || q <= 0) {
-      alert("올바른 수량을 입력해주세요 💚");
-      return;
-    }
-    const remain = Math.max(prev.total - getDiffDays(prev.lastDate), 0);
-    prev.total = remain + q;
+  } else if (qVal !== "") {
+    const current = Math.max(prev.total - getDiffDays(prev.lastDate), 0);
+    const q = Math.floor(Number(qVal));
+    prev.total = current + q;
     prev.lastDate = today;
-    prev.history = [
-      { date: today, qty: q },
-      ...(prev.history || [])
-    ].slice(0, 10);
-  }
-
-  else {
-    alert("수량을 입력해주세요 💚");
-    return;
-  }
+    prev.history = [{ date: today, qty: q }, ...(prev.history||[])].slice(0,10);
+  } else { alert("수량을 입력해주세요 💚"); return; }
 
   set(k, prev);
   render();
   showToast();
-  navigator.vibrate?.(10);
-
-  qInput.value = "";
-  tInput.value = "";
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+  if (navigator.vibrate) navigator.vibrate(10);
 }
 
+function showToast() {
+  const t = document.createElement('div');
+  t.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#A3B18A; color:#fff; padding:16px 32px; border-radius:20px; z-index:10000; animation:fadeInOut 1.5s ease; pointer-events:none; font-weight:600; box-shadow: 0 8px 24px rgba(0,0,0,0.2);";
+  t.innerText = "💚 기록 완료!";
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1500);
+}
+
+function start() {
+  document.getElementById("overlay").classList.remove("show");
+  setTimeout(() => { document.getElementById("overlay").style.display = "none"; }, 400);
+}
+
+window.onload = () => {
+  render();
+  setTimeout(() => document.getElementById("overlay").classList.add("show"), 100);
+};
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.card') && !e.target.closest('button') && !e.target.closest('.overlay')) {
+    document.activeElement.blur();
+    document.querySelectorAll('.card.open').forEach(c => c.classList.remove('open'));
+  }
+});
 </script>
 </body>
 </html>
