@@ -36,8 +36,33 @@ body {
   overflow-x: hidden;
 }
 
-h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
-.subtitle { text-align:center; font-size:13px; color:var(--sub); margin:8px 0 24px; line-height:1.5; }
+h1 { 
+  display: block;
+  width: fit-content;      /* 글자 크기에 딱 맞게 */
+  margin: 30px auto 0;     /* 중앙 정렬 및 상단 여백 */
+  padding: 12px 28px;      /* 타원형 배경을 위한 안쪽 여백 */
+  font-size: 32px; 
+  font-weight: 850; 
+  letter-spacing: -1px;
+  background: rgba(163, 177, 138, 0.15); /* 아주 연한 민트색 배경 */
+  border-radius: 100px;    /* 완전한 타원형으로 만듦 */
+  color: var(--text);
+}
+
+.subtitle { 
+  text-align: center; 
+  font-size: 13px; 
+  color: var(--sub); 
+  margin: 8px 0 24px; 
+  line-height: 1.5; 
+}
+
+/* 다크모드에서는 배경을 조금 더 은은하게 */
+@media (prefers-color-scheme: dark) {
+  h1 {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
 
 .status {
   text-align:center; padding:16px; border-radius:18px; 
@@ -122,14 +147,30 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin
 button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; margin-top: 15px; }
 button:active { opacity: 0.7; }
 
-footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; padding-bottom: 30px; }
-.overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:24px; z-index:999; }
+footer { 
+  text-align: center; 
+  font-size: 11px; 
+  color: var(--sub); 
+  margin-top: 40px; 
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+  line-height: 1.6;
+}
 
 .welcome h2 {
-  font-size: 27px;
-  font-weight: 700;
-  margin-bottom: 14px;
-  letter-spacing: -0.4px;
+  display: inline-block;
+  padding: 10px 24px;
+  background: rgba(163, 177, 138, 0.2);
+  border-radius: 100px;
+  font-size: 34px; 
+  font-weight: 850;
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .welcome h2 {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 .welcome p {
@@ -183,10 +224,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
-/* 푸터 하단 여유 공간 추가 */
-footer {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 40px);
-}
+
 
 </style>
 </head>
@@ -310,10 +348,15 @@ const card = document.createElement("div");
           <span class="icon-emoji">${s.icon}</span>
           <span class="title">${s.name}</span>
         </div>
-     <div class="stock ${isWarn ? "warn" : ""}">
-  <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
-  ${remain !== "-" && remain > 0 ? `<div style="font-size:11px; color:var(--sub); margin-top:2px;">약 ${remain}일분</div>` : ''}
-</div>
+ <div class="stock ${isWarn ? "warn" : ""}">
+        <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
+        ${remain !== "-" && remain > 0 
+            ? `<div style="font-size:11px; color:var(--sub); margin-top:2px;">약 ${remain}일분</div>` 
+            : remain === 0 
+                ? `<div style="font-size:11px; color:var(--warn-strong); margin-top:2px; font-weight:bold;">재고 없음 🚨</div>` 
+                : ''
+        }
+    </div>
       </div>
       <div class="desc">${s.desc}</div>
       <div class="edit-form">
@@ -359,62 +402,87 @@ const msgs = [
   return msg;
 }
 
+// 토스트 메시지를 띄우는 별도의 함수
+function showToast() {
+  const successMsg = document.createElement('div');
+  successMsg.classList.add('toast-success');
+  successMsg.textContent = '💚 기록 완료!';
+  successMsg.style.cssText = `
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #A3B18A; color: white;
+    padding: 16px 32px; border-radius: 20px;
+    font-weight: 600; z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    animation: fadeInOut 1.5s ease;
+  `;
+  document.body.appendChild(successMsg);
+  setTimeout(() => successMsg.remove(), 1500);
+}
+
+// 수정된 저장 함수
 function save(k, e) {
   document.activeElement.blur();
-  e.preventDefault(); e.stopPropagation();
+  e.preventDefault(); 
+  e.stopPropagation();
+  
   const dateInput = document.getElementById(k + "d").value;
   const qInput = document.getElementById(k + "q").value;
   const totalInput = document.getElementById(k + "total").value;
-  const prev = get(k) || { total: 0, lastDate: dateInput, history: [] };
+  const prev = get(k) || { total: 0, lastDate: getTodayKST(), history: [] };
 
   if (totalInput !== "") {
-    prev.total = parseInt(totalInput, 10);
-    prev.lastDate = getTodayKST();
+    // [실재고 보정]
+    const newTotal = parseInt(totalInput, 10);
+    if (isNaN(newTotal) || newTotal < 0) {
+      alert("올바른 수량을 입력해주세요 💚");
+      return;
+    }
+    prev.total = newTotal;
+    prev.lastDate = dateInput; 
+    
   } else if (qInput !== "" && parseInt(qInput) > 0) {
+    // [구매 추가]
     const q = parseInt(qInput, 10);
-    const currentRemain = prev.total ? Math.max(prev.total - getDiffDays(prev.lastDate), 0) : 0;
-    prev.total = currentRemain + q;
+    const selectedDate = new Date(dateInput + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate > today) {
+      alert("미래 날짜는 입력할 수 없어요 💚");
+      return;
+    }
+    
+    // 구매한 날짜 기준으로 기존 재고가 얼마였을지 계산
+    const diffToSelected = Math.floor((selectedDate - new Date(prev.lastDate + 'T00:00:00')) / 86400000);
+    const remainAtSelectedDate = Math.max(prev.total - diffToSelected, 0);
+    
+    prev.total = remainAtSelectedDate + q;
     prev.lastDate = dateInput;
-    prev.history = [{date: dateInput, qty: q}, ...(prev.history || [])].slice(0, 3);
+    prev.history = [{date: dateInput, qty: q}, ...(prev.history || [])].slice(0, 10);
+    
   } else {
-    alert("수량을 입력해주세요 💚"); return;
+    alert("수량을 입력해주세요 💚"); 
+    return;
   }
 
+  // 저장 및 화면 갱신
   set(k, prev);
   render();
 
-if (navigator && navigator.vibrate) {
-  navigator.vibrate(10);
-}
+  // 진동 및 알림 (여기서 사용!)
+  if (navigator && navigator.vibrate) navigator.vibrate(10);
+  showToast(); 
 
-const successMsg = document.createElement('div');
-successMsg.classList.add('toast-success');
-successMsg.textContent = '💚 기록 완료!';
-successMsg.style.cssText = `
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background:  #A3B18A;
-  color: white;
-  padding: 16px 32px;
-  border-radius: 20px;
-  font-weight: 600;
-  z-index: 1000;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  animation: fadeInOut 1.5s ease;
-`;
-document.body.appendChild(successMsg);
-setTimeout(() => successMsg.remove(), 1500);
+  // 입력창 초기화 및 카드 닫기
+  const qIn = document.getElementById(k + "q");
+  const tIn = document.getElementById(k + "total");
+  if (qIn) qIn.value = "";
+  if (tIn) tIn.value = "";
 
-const qIn = document.getElementById(k + "q");
-const tIn = document.getElementById(k + "total");
-if(qIn) qIn.value = "";
-if(tIn) tIn.value = "";
-
-setTimeout(() => {
-  document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
-}, 300);
+  setTimeout(() => {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+  }, 300);
 }
 
 function start() {
@@ -435,14 +503,17 @@ requestAnimationFrame(() => overlayEl.classList.add("show"));
 
 // 아이폰 빈 곳 터치 시 키보드 닫기 (UX 최적화)
 document.addEventListener('click', (e) => {
-  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-    document.activeElement.blur();
-
-    // 열린 카드 닫기
-    document.querySelectorAll('.card.open').forEach(c => {
-      c.classList.remove('open');
-    });
-  }
+  // 카드 내부를 클릭했으면 무시
+  if (e.target.closest('.card')) return;
+  
+  // INPUT이나 BUTTON을 클릭했으면 무시
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+  
+  // 빈 곳을 클릭했을 때만 실행
+  document.activeElement.blur();
+  document.querySelectorAll('.card.open').forEach(c => {
+    c.classList.remove('open');
+  });
 }, { passive: true });
 
 
