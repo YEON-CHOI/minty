@@ -32,28 +32,30 @@ body {
   margin:0; background:var(--bg); color:var(--text);
   padding: env(safe-area-inset-top) 20px calc(env(safe-area-inset-bottom) + 20px);
   min-height: 100vh; overscroll-behavior-y: none;
+  -webkit-user-select: none; user-select: none;
 }
 
 h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 .subtitle { text-align:center; font-size:13px; color:var(--sub); margin:8px 0 24px; line-height:1.5; }
 
-/* 상태 메시지창 가독성 개선 */
+/* 상태 메시지창 수정 */
 .status {
-  text-align:center; padding:14px; border-radius:16px; 
+  text-align:center; padding:16px; border-radius:18px; 
   background: rgba(163, 177, 138, 0.15);
   font-size:14px; margin-bottom:20px; transition: 0.3s ease;
+  line-height: 1.6; color: var(--text);
 }
 @media (prefers-color-scheme: dark) {
-  .status { background: rgba(255, 255, 255, 0.05); color: #e5e7e3; }
+  .status { background: rgba(255, 255, 255, 0.08); }
 }
 .status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
 
 .card {
   background:var(--card); border-radius:24px; padding:22px; margin-bottom:16px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.04); cursor: pointer; border: 1.5px solid transparent;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
-.card:active { transform: scale(0.97); }
+.card:active { transform: scale(0.97); background-color: rgba(0,0,0,0.02); }
 .card.warn { border: 1.5px solid var(--warn); }
 
 .card-header { display:flex; align-items:center; justify-content: space-between; }
@@ -71,15 +73,13 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 .edit-form { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
 .card.open .edit-form { max-height: 600px; opacity: 1; margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(0,0,0,0.1); }
 
-/* 구매 이력 스타일 */
-.history-container {
-  background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px; margin-bottom: 15px;
-}
+.history-container { background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px; margin-bottom: 15px; }
 .history-item { font-size: 11px; color: var(--sub); display: flex; justify-content: space-between; margin-bottom: 4px; }
-.history-item:last-child { margin-bottom: 0; }
+@media (prefers-color-scheme: dark) { .history-container { background: rgba(255,255,255,0.05); } }
 
 input, button { width:100%; padding:14px; border-radius:14px; margin-top:8px; font-size:16px; border:none; outline: none; }
-input { border: 1.5px solid #eee; background: #fafafa; color: var(--text); }
+input { border: 1.5px solid #eee; background: #fafafa; color: var(--text); -webkit-user-select: text; user-select: text; }
+input[type="date"] { position: relative; min-height: 48px; }
 @media (prefers-color-scheme: dark) { input { background: #333; border-color: #444; } }
 
 button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; margin-top: 15px; }
@@ -94,9 +94,10 @@ footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; p
 
 <div id="overlay" class="overlay" style="display:none">
   <div class="welcome" style="text-align:center; max-width:300px;">
-    <div style="font-size:50px; margin-bottom:20px;">🌿</div>
-    <h2> 💚 매일의 기록 💚 </h2>
-    <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">☀️ 오늘도 건강할 민티를 위해</p>
+    <h2>🌿 민티의 하루 🌿</h2>
+    <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">
+      ☀️ 오늘도 건강할 민티를 위해<br><br>✍️ 작은 기록 속에 남기는 나의 온도
+    </p>
     <button onclick="start()">시작하기</button>
   </div>
 </div>
@@ -107,7 +108,7 @@ footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; p
 <div id="cards"></div>
 
 <footer>
-  <div>숫자가 말하지 못하는 것들 ☺️</div>
+  <div>숫자가 말하지 못하는 것들</div>
   <div id="today" style="opacity:0.5; margin-top:4px;"></div>
 </footer>
 
@@ -120,9 +121,8 @@ const supplements = [
 ];
 
 function getTodayKST() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offset).toISOString().split('T')[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function getDiffDays(dateStr) {
@@ -149,8 +149,6 @@ function render() {
     if (d) {
       remain = Math.max(d.total - getDiffDays(d.lastDate), 0);
       if (remain <= 60) warnCount++;
-      
-      // 최근 3개 이력 생성
       if (d.history && d.history.length > 0) {
         historyHtml = `<div class="history-container">`;
         d.history.slice(0, 3).forEach(item => {
@@ -165,7 +163,7 @@ function render() {
     card.className = `card ${isWarn ? 'warn' : ''}`;
     
     card.onclick = (e) => {
-      if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return;
+      if (e.target.closest('.edit-form')) return;
       const isOpen = card.classList.contains('open');
       document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
       if (!isOpen) card.classList.add('open');
@@ -185,25 +183,28 @@ function render() {
       <div class="edit-form">
         <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
         ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">이력이 없습니다.</div>'}
-        
         <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
-        <input type="date" id="${s.key}d" value="${getTodayKST()}" onclick="event.stopPropagation()">
-        <input type="number" inputmode="numeric" placeholder="추가 수량" id="${s.key}q" onclick="event.stopPropagation()">
-        
+        <input type="date" id="${s.key}d" value="${getTodayKST()}">
+        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
         <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
-        <input type="number" inputmode="numeric" placeholder="실제 남은 수량" id="${s.key}total" onclick="event.stopPropagation()">
-        
-        <button onclick="save('${s.key}', event)">💚 기록하기</button>
+        <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
+        <button onclick="save('${s.key}', event)">💚 남겨두기</button>
       </div>
     `;
     wrap.appendChild(card);
   });
   
-  const calmMsgs = ["🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "🐋 오늘의 파도는 눈부셔", "💫 민티 오늘도 잘 챙겨 먹자"];
+  const calmMsgs = [
+    "🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "🐋 오늘의 파도는 유난히 너에게 다정할거야",
+    "💫 민티야, 오늘도 잘 챙겨 먹자", "✨ 가장 소중한 건 바로 너", "🌸 네가 걷는 모든 길에 꽃이 피길",
+    "💚 민티의 하루가 잔잔한 윤슬처럼 빛나길"
+  ];
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
   st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : calmMsgs[Math.floor(Math.random() * calmMsgs.length)];
-  document.getElementById("today").innerText = getTodayKST() + " 기준";
+  
+  const now = new Date();
+  document.getElementById("today").innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 기준`;
 }
 
 function save(k, e) {
@@ -213,19 +214,14 @@ function save(k, e) {
   const totalInput = document.getElementById(k + "total").value;
   const prev = get(k) || { total: 0, lastDate: dateInput, history: [] };
 
-  // 1. 실재고 보정 우선 처리
   if (totalInput !== "") {
     prev.total = parseInt(totalInput, 10);
-    prev.lastDate = getTodayKST(); // 보정한 시점부터 다시 카운트
-  } 
-  // 2. 일반 구매 누적 처리
-  else if (qInput !== "" && parseInt(qInput) > 0) {
+    prev.lastDate = getTodayKST();
+  } else if (qInput !== "" && parseInt(qInput) > 0) {
     const q = parseInt(qInput, 10);
-    // 현재 남은 양 계산 후 신규 수량 합산
     const currentRemain = prev.total ? Math.max(prev.total - getDiffDays(prev.lastDate), 0) : 0;
     prev.total = currentRemain + q;
     prev.lastDate = dateInput;
-    // 이력 추가 (최신순)
     prev.history = [{date: dateInput, qty: q}, ...(prev.history || [])].slice(0, 3);
   } else {
     alert("수량을 입력해주세요 💚"); return;
@@ -233,6 +229,10 @@ function save(k, e) {
 
   set(k, prev);
   render();
+  // 저장 후 카드 닫기
+  setTimeout(() => {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+  }, 300);
 }
 
 function start() { localStorage.setItem("minty_started", "yes"); document.getElementById("overlay").style.display = "none"; }
