@@ -2,10 +2,11 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
   <title>🌿 민티의 하루 🌿</title>
 
-  <!-- App Icon (SVG) -->
+  <!-- Browser tab icon (SVG OK) -->
   <link rel="icon" type="image/svg+xml"
     href='data:image/svg+xml,
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -13,10 +14,18 @@
       <text x="50" y="62" font-size="46" text-anchor="middle">🌿</text>
     </svg>'>
 
-  <!-- PWA-style -->
+  <!-- iOS Home Screen Icon (MOST IMPORTANT) -->
+  <link rel="apple-touch-icon" href="/icon-180.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#A3B18A" />
+
+  <!-- iOS App Mode -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="민티의 하루">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
 
   <style>
     :root {
