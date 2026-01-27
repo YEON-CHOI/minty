@@ -51,6 +51,7 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 .status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
 
 .card {
+  scroll-margin-top: 80px; 
   touch-action: manipulation;
   background:var(--card); border-radius:24px; padding:22px; margin-bottom:16px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.04); cursor: pointer; border: 1.5px solid transparent;
@@ -171,68 +172,74 @@ function render() {
   const wrap = document.getElementById("cards");
   wrap.innerHTML = "";
   
-  supplements.forEach(s => {
-    const d = get(s.key);
-    let remain = "-";
-    let historyHtml = "";
+supplements.forEach(s => {
+  const d = get(s.key);
+  let remain = "-";
+  let historyHtml = "";
+  let isWarn = false; // 여기서 한 번만 선언
 
-    if (d && d.lastDate) {
-      const totalAmount = Number(d.total) || 0;
-      const diff = getDiffDays(d.lastDate);
-      const calculatedRemain = Math.max(totalAmount - diff, 0);
-      remain = isNaN(calculatedRemain) ? 0 : calculatedRemain;
-      
-    const isManaged = d && typeof d.total === "number" && d.total > 0;
-    const isWarn = isManaged && remain <= 60;
+  if (d && d.lastDate) {
+    const totalAmount = Number(d.total) || 0;
+    const diff = getDiffDays(d.lastDate);
+    const calculatedRemain = Math.max(totalAmount - diff, 0);
+    remain = isNaN(calculatedRemain) ? 0 : calculatedRemain;
+    
+    // 재고 관리 중이고 60개 이하일 때 경고
+    isWarn = (totalAmount > 0 && remain <= 60);
+    if (isWarn) warnCount++;
 
-if (isWarn) warnCount++;
-
-      if (d.history && d.history.length > 0) {
-        historyHtml = `<div class="history-container">`;
-        d.history.slice(0, 3).forEach(item => {
-          historyHtml += `<div class="history-item"><span>📦 ${item.date}</span><span>${item.qty}개 추가</span></div>`;
-        });
-        historyHtml += `</div>`;
-      }
+    if (d.history && d.history.length > 0) {
+      historyHtml = `<div class="history-container">`;
+      d.history.slice(0, 3).forEach(item => {
+        historyHtml += `<div class="history-item"><span>📦 ${item.date}</span><span>${item.qty}개 추가</span></div>`;
+      });
+      historyHtml += `</div>`;
     }
+  }
+  
+  const card = document.createElement("div");
+  card.className = `card ${isWarn ? 'warn' : ''}`;
+  
+  card.onclick = (e) => {
+    if (e.target.closest('.edit-form')) return;
+    const isOpen = card.classList.contains('open');
     
-    const card = document.createElement("div");
-    card.className = `card ${isWarn ? 'warn' : ''}`;
+    // 모든 카드 닫기
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
     
-    card.onclick = (e) => {
+    if (!isOpen) {
+      card.classList.add('open');
+      // 카드가 열린 후 0.3초 뒤에 부드럽게 스크롤
       setTimeout(() => {
-  card.scrollIntoView({ behavior: "smooth", block: "start" });
-}, 150);
-      if (e.target.closest('.edit-form')) return;
-      const isOpen = card.classList.contains('open');
-      document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
-      if (!isOpen) card.classList.add('open');
-    };
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  };
 
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="header-left">
-          <span class="icon-emoji">${s.icon}</span>
-          <span class="title">${s.name}</span>
-        </div>
-        <div class="stock ${isWarn ? "warn" : ""}">
-          <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
-        </div>
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="header-left">
+        <span class="icon-emoji">${s.icon}</span>
+        <span class="title">${s.name}</span>
       </div>
-      <div class="desc">${s.desc}</div>
-      <div class="edit-form">
-        <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
-        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">이력이 없습니다.</div>'}
-        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
-        <input type="date" id="${s.key}d" value="${getTodayKST()}">
-        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
-        <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
-        <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
-        <button onclick="save('${s.key}', event)">💚 남겨두기</button>
+      <div class="stock ${isWarn ? "warn" : ""}">
+        <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
       </div>
-    `;
-    wrap.appendChild(card);
-  });
+    </div>
+    <div class="desc">${s.desc}</div>
+    <div class="edit-form">
+      <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
+      ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">이력이 없습니다.</div>'}
+      <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
+      <input type="date" id="${s.key}d" value="${getTodayKST()}">
+      <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
+      <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
+      <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
+      <button onclick="save('${s.key}', event)">💚 남겨두기</button>
+    </div>
+  `;
+  wrap.appendChild(card);
+});
   
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
@@ -277,9 +284,14 @@ function save(k, e) {
   set(k, prev);
   render();
 
-  setTimeout(() => {
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
-  }, 300);
+const qIn = document.getElementById(k + "q");
+const tIn = document.getElementById(k + "total");
+if(qIn) qIn.value = "";
+if(tIn) tIn.value = "";
+
+setTimeout(() => {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+}, 300);
 }
 
 function start() { localStorage.setItem("minty_started", "yes"); document.getElementById("overlay").style.display = "none"; }
