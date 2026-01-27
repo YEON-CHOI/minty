@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌿 민티의 하루 🌿</title>
+
+  <!-- App Icon (SVG) -->
+  <link rel="icon" type="image/svg+xml"
+    href='data:image/svg+xml,
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <rect width="100" height="100" rx="22" fill="%23A3B18A"/>
+      <text x="50" y="62" font-size="46" text-anchor="middle">🌿</text>
+    </svg>'>
+
+  <!-- PWA-style -->
+  <meta name="theme-color" content="#A3B18A" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="민티의 하루">
+
+  <style>
+    :root {
+      --bg:#F6F7F2;
+      --card:#fff;
+      --text:#2F3E34;
+      --sub:#7A8B7A;
+      --accent:#A3B18A;
+      --warn:#D9776C;
+      --warn-strong:#C44536;
+    }
+
+    * { box-sizing:border-box; font-family:-apple-system,"Noto Sans KR",sans-serif; }
+
+    body {
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      padding:20px;
+    }
+
+    h1 { text-align:center; font-size:24px; margin:0; }
+    .subtitle { text-align:center; font-size:13px; color:var(--sub); margin:6px 0 20px; }
+
+    .status {
+      text-align:center;
+      padding:10px;
+      border-radius:12px;
+      background:#eef1ea;
+      font-size:14px;
+      margin-bottom:16px;
+    }
+    .status.warn { background:#f7e6e3; color:var(--warn-strong); }
+
+    .card {
+      background:var(--card);
+      border-radius:18px;
+      padding:16px;
+      margin-bottom:14px;
+      box-shadow:0 4px 12px rgba(0,0,0,.04);
+    }
+    .card.warn { border:1.5px solid var(--warn); }
+
+    .title { font-size:16px; font-weight:600; }
+    .desc { font-size:12px; color:var(--sub); margin:4px 0 12px; }
+
+    .stock strong { font-size:20px; }
+    .stock.warn { color:var(--warn-strong); }
+
+    .small { font-size:12px; color:var(--sub); margin-top:6px; }
+
+    input,button {
+      width:100%; padding:10px; border-radius:10px; margin-top:8px;
+      font-size:14px;
+    }
+    input { border:1px solid #ddd; }
+    button {
+      background:var(--accent);
+      color:#fff;
+      border:none;
+      font-weight:600;
+    }
+
+    footer { text-align:center; font-size:12px; color:var(--sub); margin-top:24px; }
+
+    /* First launch overlay */
+    .overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(246,247,242,.96);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      z-index:10;
+    }
+    .welcome {
+      text-align:center;
+      max-width:320px;
+    }
+    .welcome h2 { font-size:22px; margin-bottom:12px; }
+    .welcome p { font-size:14px; color:var(--sub); line-height:1.6; }
+  </style>
+</head>
+
+<body>
+
+<div id="overlay" class="overlay" style="display:none">
+  <div class="welcome">
+    <h2>🌿 민티의 하루 🌿</h2>
+    <p>
+      오늘도 행복할 민티를 위해 💚
+    </p>
+    <button onclick="start()">시작하기</button>
+  </div>
+</div>
+
+<h1>🌿 민티의 하루 🌿</h1>
+<div class="subtitle">매일매일 건강하게 💊</div>
+
+<div id="status" class="status"></div>
+<div id="cards"></div>
+
+<footer>숫자 너머로 전하는 마음</footer>
+
+<script>
+const supplements=[
+ {key:"pro",name:"유산균 🦠",desc:"아침에 눈 뜨자마자, 공복에"},
+ {key:"vit",name:"종합비타민 🌈",desc:"점심 먹고 나서"},
+ {key:"omg",name:"오메가3 🐟",desc:"점심 식후, 잊지 말고"},
+ {key:"col",name:"콜라겐 ✨",desc:"하루를 마무리하며"}
+];
+
+function days(d){return Math.floor((new Date()-new Date(d))/(86400000));}
+function get(k){return JSON.parse(localStorage.getItem(k));}
+function set(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+function render(){
+ let warn=0,wrap=document.getElementById("cards");
+ wrap.innerHTML="";
+ supplements.forEach(s=>{
+  let d=get(s.key),remain="-";
+  if(d){remain=Math.max(d.qty-days(d.date),0); if(remain<=30) warn++;}
+  let c=document.createElement("div");
+  c.className="card"+(remain!=="-"&&remain<=30?" warn":"");
+  c.innerHTML=`
+   <div class="title">${s.name}</div>
+   <div class="desc">${s.desc}</div>
+   <div class="stock ${remain<=30?"warn":""}">
+    남은 수량<br><strong>${remain}</strong> 개 ${remain<=30?"⚠️":""}
+   </div>
+   <div class="small">${remain<=30?"조금씩 준비할 시간이에요 🌱":"내가 대신 기억해둘게"}</div>
+   <input type="date" id="${s.key}d">
+   <input type="number" placeholder="구매 수량" id="${s.key}q">
+   <button onclick="save('${s.key}')">저장하기 💾</button>`;
+  wrap.appendChild(c);
+ });
+ let st=document.getElementById("status");
+ st.className="status"+(warn?" warn":"");
+ st.innerText=warn?`⚠️ 준비가 필요한 영양제가 ${warn}개 있어요`:"오늘은 마음 놓아도 괜찮아요 😊";
+}
+
+function save(k){
+ let d=document.getElementById(k+"d").value;
+ let q=document.getElementById(k+"q").value;
+ if(d&&q){set(k,{date:d,qty:+q});render();}
+}
+
+function start(){
+ localStorage.setItem("minty_started","yes");
+ document.getElementById("overlay").style.display="none";
+}
+
+if(!localStorage.getItem("minty_started")){
+ document.getElementById("overlay").style.display="flex";
+}
+
+render();
+</script>
+
+</body>
+</html>
