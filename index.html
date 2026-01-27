@@ -46,7 +46,7 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
   line-height: 1.6; color: var(--text);
 }
 @media (prefers-color-scheme: dark) {
-  .status { background: rgba(255, 255, 255, 0.08); }
+  .status { background: rgba(255, 255, 255, 0.05); }
 }
 .status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
 
@@ -79,7 +79,31 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 
 input, button { width:100%; padding:14px; border-radius:14px; margin-top:8px; font-size:16px; border:none; outline: none; }
 input { border: 1.5px solid #eee; background: #fafafa; color: var(--text); -webkit-user-select: text; user-select: text; }
-input[type="date"] { position: relative; min-height: 48px; }
+
+/* 날짜 입력창 및 수량 입력창 디자인 개선 */
+input[type="date"], input[type="number"] {
+  -webkit-appearance: none; /* iOS 기본 스타일 제거 */
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--text);
+  margin-top: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  input[type="date"], input[type="number"] {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* 날짜 입력창 특유의 아이콘과 패딩 조정 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5); /* 아이콘 색상을 서브 텍스트 컬러와 맞춤 */
+}
+
 @media (prefers-color-scheme: dark) { input { background: #333; border-color: #444; } }
 
 button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; margin-top: 15px; }
@@ -142,10 +166,20 @@ function render() {
   wrap.innerHTML = "";
   
   supplements.forEach(s => {
-    const d = get(s.key);
-    let remain = "-";
-    let historyHtml = "";
-    
+    /* render 함수 내부 supplements.forEach 안의 로직 수정 */
+const d = get(s.key);
+let remain = "-"; // 기본값
+let historyHtml = "";
+
+if (d && d.total !== undefined && d.lastDate) {
+  const diff = getDiffDays(d.lastDate);
+  // 만약 계산 결과가 숫자가 아니면 0으로 처리
+  const calculatedRemain = Math.max(d.total - diff, 0);
+  remain = isNaN(calculatedRemain) ? "-" : calculatedRemain;
+  
+  if (remain !== "-" && remain <= 60) warnCount++;
+  
+ }  
     if (d) {
       remain = Math.max(d.total - getDiffDays(d.lastDate), 0);
       if (remain <= 60) warnCount++;
@@ -195,19 +229,20 @@ function render() {
   });
   
   const calmMsgs = [
-    "🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "🐋 오늘의 파도는 유난히 너에게 다정할거야",
+    "🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "💚 오늘의 하루는 유난히 너에게 다정할거야",
     "💫 민티야, 오늘도 잘 챙겨 먹자", "✨ 가장 소중한 건 바로 너", "🌸 네가 걷는 모든 길에 꽃이 피길",
-    "💚 민티의 하루가 잔잔한 윤슬처럼 빛나길"
+    "🐋 민티의 하루가 잔잔한 윤슬처럼 빛나길"
   ];
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
   st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : calmMsgs[Math.floor(Math.random() * calmMsgs.length)];
   
   const now = new Date();
-  document.getElementById("today").innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 기준`;
+  document.getElementById("today").innerText = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
 }
 
 function save(k, e) {
+  document.activeElement.blur();
   e.preventDefault(); e.stopPropagation();
   const dateInput = document.getElementById(k + "d").value;
   const qInput = document.getElementById(k + "q").value;
