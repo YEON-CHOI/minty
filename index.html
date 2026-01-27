@@ -203,13 +203,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none; /* 투명할 때 클릭 방지 */
+  visibility: hidden; /* 추가: 클릭 방지용 */
+  transition: opacity 0.4s ease, visibility 0.4s; /* 추가 */
+  pointer-events: none;
 }
 .overlay.show {
   opacity: 1;
-  pointer-events: auto; /* 보일 때만 클릭 가능 */
+  visibility: visible; /* 추가 */
+  pointer-events: auto;
 }
 
 .card.warn .icon-emoji {
@@ -230,7 +239,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 </head>
 <body>
 
-<div id="overlay" class="overlay" style="display:none">
+<div id="overlay" class="overlay">
   <div class="welcome" style="text-align:center; max-width:300px;">
     <h2>🌿 민티의 하루 🌿</h2>
     <p style="font-size:14px; color:var(--sub); line-height:1.8;">
@@ -253,6 +262,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 <script>
 
 const STORAGE_VERSION = 1;
+const savedVersion = Number(localStorage.getItem("minty_version") || 0);
 
 const supplements = [
   { key: "pro", name: "유산균", icon: '🦠', desc: "아침 공복, 따뜻한 물과 함께" },
@@ -282,10 +292,9 @@ function formatDateShort(dateStr) {
 function get(k) { return JSON.parse(localStorage.getItem('minty_' + k)); }
 function set(k, v) { localStorage.setItem('minty_' + k, JSON.stringify(v)); }
 
-if (!localStorage.getItem("minty_version")) {
+if (savedVersion !== STORAGE_VERSION) {
   localStorage.setItem("minty_version", STORAGE_VERSION);
 }
-
 
 function render() {
 const sortedSupplements = [...supplements].sort((a, b) => {
@@ -363,7 +372,19 @@ const card = document.createElement("div");
         <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
         ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">아직 기록이 없어요. ✨</div>'}
         <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
-        <input type="date" id="${s.key}d" value="${getTodayKST()}">
+<div style="font-size:11px; color:var(--sub); margin-bottom:4px;">
+  오늘 기준으로만 기록돼요
+</div>
+<input type="date" ... />
+
+        <input
+  type="date"
+  id="${s.key}d"
+  value="${getTodayKST()}"
+  min="${getTodayKST()}"
+  max="${getTodayKST()}"
+  inputmode="none"
+/>
         <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
         <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
         <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
@@ -420,86 +441,74 @@ function showToast() {
   setTimeout(() => successMsg.remove(), 1500);
 }
 
-// 수정된 저장 함수
 function save(k, e) {
   document.activeElement.blur();
-  e.preventDefault(); 
+  e.preventDefault();
   e.stopPropagation();
-  
-  const dateInput = document.getElementById(k + "d").value;
-  const qInput = document.getElementById(k + "q").value;
-  const totalInput = document.getElementById(k + "total").value;
-  const prev = get(k) || { total: 0, lastDate: getTodayKST(), history: [] };
 
-  if (totalInput !== "") {
-    // [실재고 보정]
-    const newTotal = parseInt(totalInput, 10);
-    if (isNaN(newTotal) || newTotal < 0) {
-      alert("올바른 수량을 입력해주세요 💚");
-      return;
-    }
-    prev.total = newTotal;
-    prev.lastDate = dateInput; 
-    
-  } else if (qInput !== "" && parseInt(qInput) > 0) {
-    // [구매 추가]
-    const q = parseInt(qInput, 10);
-    const selectedDate = new Date(dateInput + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (selectedDate > today) {
-      alert("미래 날짜는 입력할 수 없어요 💚");
-      return;
-    }
-    
-    // 구매한 날짜 기준으로 기존 재고가 얼마였을지 계산
-    const diffToSelected = Math.floor((selectedDate - new Date(prev.lastDate + 'T00:00:00')) / 86400000);
-    const remainAtSelectedDate = Math.max(prev.total - diffToSelected, 0);
-    
-    prev.total = remainAtSelectedDate + q;
-    prev.lastDate = dateInput;
-    prev.history = [{date: dateInput, qty: q}, ...(prev.history || [])].slice(0, 10);
-    
-  } else {
-    alert("수량을 입력해주세요 💚"); 
+  const todayStr = getTodayKST();
+  const qVal = document.getElementById(k + "q").value;
+  const tVal = document.getElementById(k + "total").value;
+
+  // ❗️동시 입력 차단 (가장 먼저)
+  if (tVal !== "" && qVal !== "") {
+    alert("실재고 보정과 구매 추가는 동시에 할 수 없어요 💚");
     return;
   }
 
-  // 저장 및 화면 갱신
+  const prev = get(k) || { total: 0, lastDate: todayStr, history: [] };
+
+  const diff = getDiffDays(prev.lastDate);
+  let calculatedNow = Math.max(prev.total - diff, 0);
+
+  if (tVal !== "") {
+    calculatedNow = parseInt(tVal, 10);
+  }
+
+  if (qVal !== "" && parseInt(qVal, 10) > 0) {
+    const q = parseInt(qVal, 10);
+    calculatedNow += q;
+
+    prev.history = [
+      { date: todayStr, qty: q },
+      ...(prev.history || [])
+    ].slice(0, 10);
+  }
+
+  if (tVal === "" && (qVal === "" || parseInt(qVal, 10) <= 0)) {
+    alert("수량을 입력해주세요 💚");
+    return;
+  }
+
+  prev.total = calculatedNow;
+  prev.lastDate = todayStr;
+
   set(k, prev);
   render();
 
-  // 진동 및 알림 (여기서 사용!)
-  if (navigator && navigator.vibrate) navigator.vibrate(10);
-  showToast(); 
+  if (navigator.vibrate) navigator.vibrate(10);
+  showToast();
 
-  // 입력창 초기화 및 카드 닫기
-  const qIn = document.getElementById(k + "q");
-  const tIn = document.getElementById(k + "total");
-  if (qIn) qIn.value = "";
-  if (tIn) tIn.value = "";
+  document.getElementById(k + "q").value = "";
+  document.getElementById(k + "total").value = "";
 
   setTimeout(() => {
     document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
   }, 300);
 }
 
+
 function start() {
   const overlay = document.getElementById("overlay");
   overlay.classList.remove("show");
-  setTimeout(() => {
-    overlay.style.display = "none";
-  }, 300);
 }
 
 // 초기 실행
 render();
 
-// 의도대로 앱을 켤 때마다 항상 오버레이(시작화면)가 뜨도록 설정
-const overlayEl = document.getElementById("overlay");
-overlayEl.style.display = "flex";
-requestAnimationFrame(() => overlayEl.classList.add("show"));
+window.requestAnimationFrame(() => {
+  document.getElementById("overlay").classList.add("show");
+});
 
 // 아이폰 빈 곳 터치 시 키보드 닫기 (UX 최적화)
 document.addEventListener('click', (e) => {
