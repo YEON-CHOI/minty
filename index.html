@@ -5,10 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>🌿 민티의 하루 🌿</title>
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="민티의 하루">
+  <!-- Browser tab icon (SVG OK) -->
+  <link rel="icon" type="image/svg+xml"
+    href='data:image/svg+xml,
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <rect width="100" height="100" rx="22" fill="%23A3B18A"/>
+      <text x="50" y="62" font-size="46" text-anchor="middle">🌿</text>
+    </svg>'>
 
+  <!-- iOS Home Screen Icon (MOST IMPORTANT) -->
+  <link rel="apple-touch-icon" href="/icon-180.png">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#A3B18A" />
+
+  <!-- iOS App Mode -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="민티의 하루">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">  
+  
 <style>
 :root {
   --bg:#F6F7F2;
@@ -27,6 +43,7 @@
 }
 
 body {
+  overscroll-behavior: none;
   margin:0;
   background:var(--bg);
   color:var(--text);
@@ -70,10 +87,14 @@ h1 {
   border-radius:24px;
   padding:22px;
   margin-bottom:16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   border: 1px solid rgba(0,0,0,0.02);
+}
+
+.card:active {
+  transform: scale(0.98);
 }
 
 /* 카드 경고 상태 */
@@ -100,8 +121,8 @@ h1 {
 }
 
 @keyframes breathe {
-  0%, 100% { transform:scale(1); }
-  50% { transform:scale(1.1); }
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
 }
 
 .title { 
@@ -168,7 +189,7 @@ input, button {
   padding:14px; 
   border-radius:14px; 
   margin-top:10px;
-  font-size:15px; /* iOS 자동 줌 방지를 위해 16px에 가깝게 설정 */
+  font-size:16px; 
   border:none;
   outline: none;
 }
@@ -217,6 +238,46 @@ footer {
   text-align:center;
   max-width:300px;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1f2320;
+    --card:#2a2f2b;
+    --text:#e5e7e3;
+    --sub:#aab0a5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-emoji {
+    animation: none;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* iOS 웹앱 스크롤 바운스 방지 및 터치 피드백 */
+body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card:active {
+  transform: scale(0.97);
+  background-color: #f9faf8;
+  transition: transform 0.1s ease;
+}
+
+/* 다크모드 시 입력창 가독성 보강 */
+@media (prefers-color-scheme: dark) {
+  input { background: #333; color: white; border-color: #444; }
+  .last-purchase { background: rgba(255,255,255,0.05); }
+}
+  
 </style>
 </head>
 <body>
@@ -224,23 +285,23 @@ footer {
 <div id="overlay" class="overlay" style="display:none">
   <div class="welcome">
     <div style="font-size:50px; margin-bottom:20px;">🌿</div>
-    <h2 style="margin-bottom:12px;">민티의 하루</h2>
+    <h2 style="margin-bottom:12px;"> 💚 매일의 기록 💚 </h2>
     <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">
-      오늘도 건강할 민티를 위해<br>
-      작은 기록 속에 남기는 나의 온도
+     ☀️ 오늘도 건강할 민티를 위해<br><br>
+     ✍️ 작은 기록 속에 남기는 나의 온도
     </p>
     <button onclick="start()">시작하기</button>
   </div>
 </div>
 
 <h1>🌿 민티의 하루 🌿</h1>
-<div class="subtitle">아프지 않았으면 하는 마음으로</div>
+<div class="subtitle"> 오늘도 건강할 민티를 위해 😎 </div>
 
 <div id="status" class="status"></div>
 <div id="cards"></div>
 
 <footer>
-  <div>숫자가 말하지 못하는 것들</div>
+  <div>숫자가 말하지 못하는 것들 ☺️</div>
   <div id="today" style="font-size:11px; opacity:0.5; margin-top:4px;"></div>
 </footer>
 
@@ -253,6 +314,12 @@ const supplements = [
 ];
 
 // 정확한 날짜 계산 (자정 기준)
+function getTodayKST() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offset).toISOString().split('T')[0];
+}
+
 function getDiffDays(dateStr) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -286,6 +353,7 @@ function render() {
     let remain = "-";
     let lastPurchase = "";
     
+// 하루에 1개 섭취 기준으로 남은 개수 계산
     if (d) {
       remain = Math.max(d.qty - getDiffDays(d.date), 0);
       if (remain <= 60) warnCount++;
@@ -295,15 +363,26 @@ function render() {
     const isWarn = (remain !== "-" && remain <= 60);
     const card = document.createElement("div");
     card.className = `card ${isWarn ? 'warn' : ''}`;
-    
-    // 카드 클릭 시 상세 폼 열기 (이벤트 전파 제어)
-    card.onclick = (e) => {
-      if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-        const isOpen = card.classList.contains('open');
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
-        if(!isOpen) card.classList.add('open');
-      }
-    };
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-expanded", "false");
+
+
+
+card.onclick = (e) => {
+  if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return;
+
+  const isOpen = card.classList.contains('open');
+
+  document.querySelectorAll('.card').forEach(c => {
+    c.classList.remove('open');
+    c.setAttribute("aria-expanded", "false");
+  });
+
+  if (!isOpen) {
+    card.classList.add('open');
+    card.setAttribute("aria-expanded", "true");
+  }
+};
 
     card.innerHTML = `
       <div class="card-header">
@@ -322,10 +401,11 @@ function render() {
         ${lastPurchase ? `<div class="last-purchase">📦 마지막 기록: ${lastPurchase}</div>` : ""}
         <div style="font-size:12px; color:var(--sub); margin-left:2px; margin-bottom:4px">새로운 구매 기록 입력</div>
         <input type="date" id="${s.key}d" value="${new Date().toISOString().split('T')[0]}" onclick="event.stopPropagation()">
-        <input type="number" placeholder="구매 수량" id="${s.key}q" min="1" onclick="event.stopPropagation()">
+        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q" min="1" onclick="event.stopPropagation()">
         <button onclick="save('${s.key}', event)">💚 챙겼어요</button>
       </div>
     `;
+
     wrap.appendChild(card);
   });
   
@@ -333,12 +413,13 @@ function render() {
   st.className = "status" + (warnCount ? " warn" : "");
   st.innerText = warnCount 
     ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` 
-    : "😊 오은 마음 놓아도 괜찮아";
+    : "🌱 오늘은 명상하기 좋은 날";
   
   document.getElementById("today").innerText = formatDate(new Date()) + " 기준";
 }
 
 function save(k, e) {
+  e.preventDefault();
   e.stopPropagation();
   const d = document.getElementById(k + "d").value;
   const q = document.getElementById(k + "q").value;
