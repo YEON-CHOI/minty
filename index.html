@@ -5,304 +5,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>🌿 민티의 하루 🌿</title>
 
-  <!-- Browser tab icon (SVG OK) -->
-  <link rel="icon" type="image/svg+xml"
-    href='data:image/svg+xml,
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-      <rect width="100" height="100" rx="22" fill="%23A3B18A"/>
-      <text x="50" y="62" font-size="46" text-anchor="middle">🌿</text>
-    </svg>'>
-
-  <!-- iOS Home Screen Icon (MOST IMPORTANT) -->
   <link rel="apple-touch-icon" href="/icon-180.png">
-
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#A3B18A" />
-
-  <!-- iOS App Mode -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="민티의 하루">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">  
   
 <style>
 :root {
-  --bg:#F6F7F2;
-  --card:#fff;
-  --text:#2F3E34;
-  --sub:#7A8B7A;
-  --accent:#A3B18A;
-  --warn:#D9776C;
-  --warn-strong:#C44536;
+  --bg:#F6F7F2; --card:#fff; --text:#2F3E34; --sub:#7A8B7A;
+  --accent:#A3B18A; --warn:#D9776C; --warn-strong:#C44536;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#1f2320; --card:#2a2f2b; --text:#e5e7e3; --sub:#aab0a5; }
 }
 
 * { 
   box-sizing:border-box; 
-  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color:transparent;
 }
 
 body {
-  overscroll-behavior: none;
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  /* 아이폰 노치(Safe Area) 대응 */
+  margin:0; background:var(--bg); color:var(--text);
   padding: env(safe-area-inset-top) 20px calc(env(safe-area-inset-bottom) + 20px);
-  min-height: 100vh;
+  min-height: 100vh; overscroll-behavior-y: none;
 }
 
-h1 { 
-  text-align:center; 
-  font-size:24px; 
-  margin:0;
-  padding-top:20px;
-}
+h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
+.subtitle { text-align:center; font-size:13px; color:var(--sub); margin:8px 0 24px; line-height:1.5; }
 
-.subtitle { 
-  text-align:center; 
-  font-size:13px; 
-  color:var(--sub); 
-  margin:8px 0 24px;
-  line-height:1.5;
-}
-
+/* 상태 메시지창 가독성 개선 */
 .status {
-  text-align:center;
-  padding:14px;
-  border-radius:16px;
-  background:#eef1ea;
-  font-size:14px;
-  margin-bottom:20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align:center; padding:14px; border-radius:16px; 
+  background: rgba(163, 177, 138, 0.15);
+  font-size:14px; margin-bottom:20px; transition: 0.3s ease;
 }
-.status.warn { 
-  background:#f7e6e3; 
-  color:var(--warn-strong);
-  font-weight: 600;
+@media (prefers-color-scheme: dark) {
+  .status { background: rgba(255, 255, 255, 0.05); color: #e5e7e3; }
 }
+.status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
 
 .card {
-  background:var(--card);
-  border-radius:24px;
-  padding:22px;
-  margin-bottom:16px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  border: 1px solid rgba(0,0,0,0.02);
+  background:var(--card); border-radius:24px; padding:22px; margin-bottom:16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.04); cursor: pointer; border: 1.5px solid transparent;
+  transition: transform 0.2s ease;
 }
+.card:active { transform: scale(0.97); }
+.card.warn { border: 1.5px solid var(--warn); }
 
-.card:active {
-  transform: scale(0.98);
-}
+.card-header { display:flex; align-items:center; justify-content: space-between; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.icon-emoji { font-size: 32px; animation: breathe 3.2s ease-in-out infinite; display: inline-block; }
 
-/* 카드 경고 상태 */
-.card.warn { 
-  border: 1.5px solid var(--warn);
-}
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.08); opacity: 1; } }
 
-.card-header {
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-}
+.title { font-size:17px; font-weight:700; }
+.desc { font-size:12px; color:var(--sub); margin:4px 0 14px; line-height:1.4; }
+.stock { font-size:13px; text-align: right; }
+.stock strong { font-size:26px; font-weight:700; color: var(--accent); }
+.stock.warn strong { color:var(--warn-strong); }
 
-.header-left {
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
+.edit-form { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; }
+.card.open .edit-form { max-height: 600px; opacity: 1; margin-top: 18px; padding-top: 18px; border-top: 1px dashed rgba(0,0,0,0.1); }
 
-.icon-emoji {
-  font-size: 32px;
-  animation: breathe 3.2s ease-in-out infinite;
-  display: inline-block;
+/* 구매 이력 스타일 */
+.history-container {
+  background: rgba(0,0,0,0.03); border-radius: 12px; padding: 10px; margin-bottom: 15px;
 }
+.history-item { font-size: 11px; color: var(--sub); display: flex; justify-content: space-between; margin-bottom: 4px; }
+.history-item:last-child { margin-bottom: 0; }
 
-@keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.08); opacity: 1; }
-}
+input, button { width:100%; padding:14px; border-radius:14px; margin-top:8px; font-size:16px; border:none; outline: none; }
+input { border: 1.5px solid #eee; background: #fafafa; color: var(--text); }
+@media (prefers-color-scheme: dark) { input { background: #333; border-color: #444; } }
 
-.title { 
-  font-size:17px; 
-  font-weight:700;
-  letter-spacing: -0.5px;
-}
+button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; margin-top: 15px; }
+button:active { opacity: 0.7; }
 
-.desc { 
-  font-size:12px; 
-  color:var(--sub); 
-  margin:4px 0 14px;
-  line-height:1.4;
-}
+footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; padding-bottom: 30px; }
 
-.stock { 
-  font-size:13px;
-  text-align: right;
-}
-.stock strong { 
-  font-size:26px;
-  font-weight:700;
-  color: var(--accent);
-}
-.stock.warn strong { 
-  color:var(--warn-strong);
-}
-
-.status-label { 
-  font-size:12px; 
-  color:var(--sub); 
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 입력 폼 (숨김/펼침) */
-.edit-form {
-  max-height: 0;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-}
-.card.open .edit-form {
-  max-height: 400px;
-  opacity: 1;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px dashed #f0f0f0;
-}
-
-.last-purchase {
-  font-size:11px;
-  color:var(--sub);
-  margin-bottom: 12px;
-  background: #f9faf8;
-  padding: 8px;
-  border-radius: 8px;
-}
-
-input, button {
-  width:100%; 
-  padding:14px; 
-  border-radius:14px; 
-  margin-top:10px;
-  font-size:16px; 
-  border:none;
-  outline: none;
-}
-
-input { 
-  border: 1.5px solid #eee;
-  background: #fafafa;
-  -webkit-appearance: none; /* iOS 기본 스타일 제거 */
-}
-
-button {
-  background:var(--accent);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-  transition: opacity 0.2s;
-}
-
-button:active {
-  opacity: 0.7;
-}
-
-footer { 
-  text-align:center; 
-  font-size:12px; 
-  color:var(--sub); 
-  margin-top:40px;
-  line-height:1.8;
-}
-
-/* 첫 실행 화면 */
-.overlay {
-  position:fixed;
-  inset:0;
-  background:rgba(246,247,242,.98);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-  z-index:999;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-}
-
-.welcome {
-  text-align:center;
-  max-width:300px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg:#1f2320;
-    --card:#2a2f2b;
-    --text:#e5e7e3;
-    --sub:#aab0a5;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .icon-emoji {
-    animation: none;
-  }
-}
-
-@media (display-mode: standalone) {
-  body {
-    padding-top: env(safe-area-inset-top);
-  }
-}
-
-/* iOS 웹앱 스크롤 바운스 방지 및 터치 피드백 */
-body {
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.card:active {
-  transform: scale(0.97);
-  background-color: #f9faf8;
-  transition: transform 0.1s ease;
-}
-
-/* 다크모드 시 입력창 가독성 보강 */
-@media (prefers-color-scheme: dark) {
-  input { background: #333; color: white; border-color: #444; }
-  .last-purchase { background: rgba(255,255,255,0.05); }
-}
-  
+.overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:24px; z-index:999; }
 </style>
 </head>
 <body>
 
 <div id="overlay" class="overlay" style="display:none">
-  <div class="welcome">
+  <div class="welcome" style="text-align:center; max-width:300px;">
     <div style="font-size:50px; margin-bottom:20px;">🌿</div>
-    <h2 style="margin-bottom:12px;"> 💚 매일의 기록 💚 </h2>
-    <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">
-     ☀️ 오늘도 건강할 민티를 위해<br><br>
-     ✍️ 작은 기록 속에 남기는 나의 온도
-    </p>
+    <h2> 💚 매일의 기록 💚 </h2>
+    <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">☀️ 오늘도 건강할 민티를 위해</p>
     <button onclick="start()">시작하기</button>
   </div>
 </div>
 
 <h1>🌿 민티의 하루 🌿</h1>
-<div class="subtitle"> 오늘도 건강할 민티를 위해 😎 </div>
-
+<div class="subtitle">오늘도 건강할 민티를 위해 😎</div>
 <div id="status" class="status"></div>
 <div id="cards"></div>
 
 <footer>
   <div>숫자가 말하지 못하는 것들 ☺️</div>
-  <div id="today" style="font-size:11px; opacity:0.5; margin-top:4px;"></div>
+  <div id="today" style="opacity:0.5; margin-top:4px;"></div>
 </footer>
 
 <script>
@@ -313,7 +119,6 @@ const supplements = [
   { key: "col", name: "콜라겐", icon: '✨', desc: "오늘 하루를 마무리하며" }
 ];
 
-// 정확한 날짜 계산 (자정 기준)
 function getTodayKST() {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60000;
@@ -331,18 +136,6 @@ function getDiffDays(dateStr) {
 function get(k) { return JSON.parse(localStorage.getItem('minty_' + k)); }
 function set(k, v) { localStorage.setItem('minty_' + k, JSON.stringify(v)); }
 
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
-}
-
-function getStatusMsg(remain) {
-  if (remain === 0) return "🚨 지금 바로 주문 필요!";
-  if (remain <= 30) return "⚠️ 곧 준비해야 해";
-  if (remain <= 60) return "🌥️ 슬슬 준비할 시간";
-  return "☀️ 당분간은 걱정 없어";
-}
-
 function render() {
   let warnCount = 0;
   const wrap = document.getElementById("cards");
@@ -351,38 +144,32 @@ function render() {
   supplements.forEach(s => {
     const d = get(s.key);
     let remain = "-";
-    let lastPurchase = "";
+    let historyHtml = "";
     
-// 하루에 1개 섭취 기준으로 남은 개수 계산
     if (d) {
-      remain = Math.max(d.qty - getDiffDays(d.date), 0);
+      remain = Math.max(d.total - getDiffDays(d.lastDate), 0);
       if (remain <= 60) warnCount++;
-      lastPurchase = `${formatDate(d.date)}에 ${d.qty}개 구매`;
+      
+      // 최근 3개 이력 생성
+      if (d.history && d.history.length > 0) {
+        historyHtml = `<div class="history-container">`;
+        d.history.slice(0, 3).forEach(item => {
+          historyHtml += `<div class="history-item"><span>📦 ${item.date}</span><span>${item.qty}개 추가</span></div>`;
+        });
+        historyHtml += `</div>`;
+      }
     }
     
     const isWarn = (remain !== "-" && remain <= 60);
     const card = document.createElement("div");
     card.className = `card ${isWarn ? 'warn' : ''}`;
-    card.setAttribute("role", "button");
-    card.setAttribute("aria-expanded", "false");
-
-
-
-card.onclick = (e) => {
-  if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return;
-
-  const isOpen = card.classList.contains('open');
-
-  document.querySelectorAll('.card').forEach(c => {
-    c.classList.remove('open');
-    c.setAttribute("aria-expanded", "false");
-  });
-
-  if (!isOpen) {
-    card.classList.add('open');
-    card.setAttribute("aria-expanded", "true");
-  }
-};
+    
+    card.onclick = (e) => {
+      if (['INPUT', 'BUTTON'].includes(e.target.tagName)) return;
+      const isOpen = card.classList.contains('open');
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+      if (!isOpen) card.classList.add('open');
+    };
 
     card.innerHTML = `
       <div class="card-header">
@@ -391,57 +178,66 @@ card.onclick = (e) => {
           <span class="title">${s.name}</span>
         </div>
         <div class="stock ${isWarn ? "warn" : ""}">
-          <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub); font-weight:normal">개</span>
+          <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
         </div>
       </div>
       <div class="desc">${s.desc}</div>
-      <div class="status-label">${remain !== "-" ? getStatusMsg(remain) : "기록을 입력해주세요 ✏️"}</div>
-      
       <div class="edit-form">
-        ${lastPurchase ? `<div class="last-purchase">📦 마지막 기록: ${lastPurchase}</div>` : ""}
-        <div style="font-size:12px; color:var(--sub); margin-left:2px; margin-bottom:4px">새로운 구매 기록 입력</div>
-        <input type="date" id="${s.key}d" value="${new Date().toISOString().split('T')[0]}" onclick="event.stopPropagation()">
-        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q" min="1" onclick="event.stopPropagation()">
-        <button onclick="save('${s.key}', event)">💚 챙겼어요</button>
+        <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
+        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">이력이 없습니다.</div>'}
+        
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
+        <input type="date" id="${s.key}d" value="${getTodayKST()}" onclick="event.stopPropagation()">
+        <input type="number" inputmode="numeric" placeholder="추가 수량" id="${s.key}q" onclick="event.stopPropagation()">
+        
+        <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
+        <input type="number" inputmode="numeric" placeholder="실제 남은 수량" id="${s.key}total" onclick="event.stopPropagation()">
+        
+        <button onclick="save('${s.key}', event)">💚 기록하기</button>
       </div>
     `;
-
     wrap.appendChild(card);
   });
   
+  const calmMsgs = ["🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "🐋 오늘의 파도는 눈부셔", "💫 민티 오늘도 잘 챙겨 먹자"];
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
-  st.innerText = warnCount 
-    ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` 
-    : "🌱 오늘은 명상하기 좋은 날";
-  
-  document.getElementById("today").innerText = formatDate(new Date()) + " 기준";
+  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : calmMsgs[Math.floor(Math.random() * calmMsgs.length)];
+  document.getElementById("today").innerText = getTodayKST() + " 기준";
 }
 
 function save(k, e) {
-  e.preventDefault();
-  e.stopPropagation();
-  const d = document.getElementById(k + "d").value;
-  const q = document.getElementById(k + "q").value;
-  if (d && q && q > 0) {
-    set(k, {date: d, qty: +q});
-    render();
+  e.preventDefault(); e.stopPropagation();
+  const dateInput = document.getElementById(k + "d").value;
+  const qInput = document.getElementById(k + "q").value;
+  const totalInput = document.getElementById(k + "total").value;
+  const prev = get(k) || { total: 0, lastDate: dateInput, history: [] };
+
+  // 1. 실재고 보정 우선 처리
+  if (totalInput !== "") {
+    prev.total = parseInt(totalInput, 10);
+    prev.lastDate = getTodayKST(); // 보정한 시점부터 다시 카운트
+  } 
+  // 2. 일반 구매 누적 처리
+  else if (qInput !== "" && parseInt(qInput) > 0) {
+    const q = parseInt(qInput, 10);
+    // 현재 남은 양 계산 후 신규 수량 합산
+    const currentRemain = prev.total ? Math.max(prev.total - getDiffDays(prev.lastDate), 0) : 0;
+    prev.total = currentRemain + q;
+    prev.lastDate = dateInput;
+    // 이력 추가 (최신순)
+    prev.history = [{date: dateInput, qty: q}, ...(prev.history || [])].slice(0, 3);
   } else {
-    alert("날짜와 수량을 모두 입력해주세요 💚");
+    alert("수량을 입력해주세요 💚"); return;
   }
+
+  set(k, prev);
+  render();
 }
 
-function start() {
-  localStorage.setItem("minty_started", "yes");
-  document.getElementById("overlay").style.display = "none";
-}
-
-if (!localStorage.getItem("minty_started")) {
-  document.getElementById("overlay").style.display = "flex";
-}
-
+function start() { localStorage.setItem("minty_started", "yes"); document.getElementById("overlay").style.display = "none"; }
+if (!localStorage.getItem("minty_started")) document.getElementById("overlay").style.display = "flex";
 render();
 </script>
-
 </body>
 </html>
