@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>🌿 민티의 하루 🌿</title>
 
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="apple-touch-icon" href="/icon-180.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#A3B18A" />
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,6 +50,13 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
 }
 .status.warn { background:#f7e6e3; color:var(--warn-strong); font-weight: 600; }
 
+@media (prefers-color-scheme: dark) {
+  .status.warn { 
+    background: rgba(217, 119, 108, 0.2); 
+    color: #f5a895; 
+  }
+}
+
 .card {
   scroll-margin-top: 80px; 
   touch-action: manipulation;
@@ -58,6 +65,11 @@ h1 { text-align:center; font-size:24px; margin:0; padding-top:20px; }
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 .card:active { transform: scale(0.97); background-color: rgba(0,0,0,0.02); }
+@media (prefers-color-scheme: dark) {
+  .card:active { 
+    background-color: rgba(255,255,255,0.05); 
+  }
+}
 .card.warn { border: 1.5px solid var(--warn); }
 
 .card-header { display:flex; align-items:center; justify-content: space-between; }
@@ -112,6 +124,70 @@ button:active { opacity: 0.7; }
 
 footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; padding-bottom: 30px; }
 .overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:24px; z-index:999; }
+
+.welcome h2 {
+  font-size: 27px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  letter-spacing: -0.4px;
+}
+
+.welcome p {
+  margin-top: 6px;
+  margin-bottom: 24px;
+}
+
+
+.card {
+  will-change: transform;
+}
+
+/* 아이폰 날짜 아이콘 및 입력창 터치 개선 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5); /* 다크/라이트 모두 적절히 보이도록 조정 */
+  margin-right: 5px;
+}
+
+/* 터치 시 불필요한 선택 방지 */
+.status, .card-header, h1 {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
+.overlay {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* 투명할 때 클릭 방지 */
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto; /* 보일 때만 클릭 가능 */
+}
+
+.card.warn .icon-emoji {
+  animation: breathe 2.6s ease-in-out infinite;
+}
+
+/* 토스트 메시지 다크모드 대응 및 그림자 강화 */
+@media (prefers-color-scheme: dark) {
+  .toast-success { 
+    background: #588157 !important; /* 다크모드에 어울리는 조금 더 차분한 녹색 */
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  }
+}
+
+/* 푸터 하단 여유 공간 추가 */
+footer {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40px);
+}
+
 </style>
 </head>
 <body>
@@ -119,8 +195,8 @@ footer { text-align:center; font-size:11px; color:var(--sub); margin-top:40px; p
 <div id="overlay" class="overlay" style="display:none">
   <div class="welcome" style="text-align:center; max-width:300px;">
     <h2>🌿 민티의 하루 🌿</h2>
-    <p style="font-size:14px; color:var(--sub); line-height:1.8; margin-bottom:24px;">
-      ☀️ 오늘도 건강할 민티를 위해<br><br>✍️ 작은 기록 속에 남기는 나의 온도
+    <p style="font-size:14px; color:var(--sub); line-height:1.8;">
+      ✍️ 작은 기록 속에 남기는 나의 온도
     </p>
     <button onclick="start()">시작하기</button>
   </div>
@@ -160,6 +236,11 @@ function getDiffDays(dateStr) {
   return Math.floor((today - pDate) / 86400000);
 }
 
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth()+1}월 ${d.getDate()}일`;
+}
+
 function get(k) { return JSON.parse(localStorage.getItem('minty_' + k)); }
 function set(k, v) { localStorage.setItem('minty_' + k, JSON.stringify(v)); }
 
@@ -167,79 +248,88 @@ if (!localStorage.getItem("minty_version")) {
   localStorage.setItem("minty_version", STORAGE_VERSION);
 }
 
+
 function render() {
+const sortedSupplements = [...supplements].sort((a, b) => {
+  const da = get(a.key);
+  const db = get(b.key);
+
+  const ra = da ? Math.max((da.total || 0) - getDiffDays(da.lastDate), 0) : Infinity;
+  const rb = db ? Math.max((db.total || 0) - getDiffDays(db.lastDate), 0) : Infinity;
+
+  return ra - rb;
+});
+
   let warnCount = 0;
   const wrap = document.getElementById("cards");
   wrap.innerHTML = "";
   
-supplements.forEach(s => {
-  const d = get(s.key);
-  let remain = "-";
-  let historyHtml = "";
-  let isWarn = false; // 여기서 한 번만 선언
+ sortedSupplements.forEach(s => {
+    const d = get(s.key);
+    let remain = "-";
+    let historyHtml = "";
+    let isWarn = false;
 
-  if (d && d.lastDate) {
-    const totalAmount = Number(d.total) || 0;
-    const diff = getDiffDays(d.lastDate);
-    const calculatedRemain = Math.max(totalAmount - diff, 0);
-    remain = isNaN(calculatedRemain) ? 0 : calculatedRemain;
+    if (d && d.lastDate) {
+      const totalAmount = Number(d.total) || 0;
+      const diff = getDiffDays(d.lastDate);
+      const calculatedRemain = Math.max(totalAmount - diff, 0);
+      remain = isNaN(calculatedRemain) ? 0 : calculatedRemain;
     
     // 재고 관리 중이고 60개 이하일 때 경고
     isWarn = (totalAmount > 0 && remain <= 60);
     if (isWarn) warnCount++;
 
-    if (d.history && d.history.length > 0) {
-      historyHtml = `<div class="history-container">`;
-      d.history.slice(0, 3).forEach(item => {
-        historyHtml += `<div class="history-item"><span>📦 ${item.date}</span><span>${item.qty}개 추가</span></div>`;
-      });
-      historyHtml += `</div>`;
+if (d.history && d.history.length > 0) {
+        historyHtml = `<div class="history-container">`;
+        d.history.slice(0, 3).forEach(item => {
+          historyHtml += `<div class="history-item"><span>📦 ${formatDateShort(item.date)}</span><span>${item.qty}개 추가</span></div>`;
+        });
+        historyHtml += `</div>`;
+      }
     }
-  }
-  
-  const card = document.createElement("div");
-  card.className = `card ${isWarn ? 'warn' : ''}`;
-  
-  card.onclick = (e) => {
-    if (e.target.closest('.edit-form')) return;
-    const isOpen = card.classList.contains('open');
+
+const card = document.createElement("div");
+    card.className = `card ${isWarn ? 'warn' : ''}`;
     
-    // 모든 카드 닫기
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
-    
-    if (!isOpen) {
-      card.classList.add('open');
-      // 카드가 열린 후 0.3초 뒤에 부드럽게 스크롤
-      setTimeout(() => {
-        card.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 300);
-    }
-  };
+    card.onclick = (e) => {
+      if (e.target.closest('.edit-form')) return;
+      const isOpen = card.classList.contains('open');
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+      if (!isOpen) {
+        card.classList.add('open');
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 300);
+      }
+    };
 
   card.innerHTML = `
-    <div class="card-header">
-      <div class="header-left">
-        <span class="icon-emoji">${s.icon}</span>
-        <span class="title">${s.name}</span>
+      <div class="card-header">
+        <div class="header-left">
+          <span class="icon-emoji">${s.icon}</span>
+          <span class="title">${s.name}</span>
+        </div>
+     <div class="stock ${isWarn ? "warn" : ""}">
+  <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
+  ${remain !== "-" && remain > 0 ? `<div style="font-size:11px; color:var(--sub); margin-top:2px;">약 ${remain}일분</div>` : ''}
+</div>
       </div>
-      <div class="stock ${isWarn ? "warn" : ""}">
-        <strong>${remain}</strong> <span style="font-size:14px; color:var(--sub);">개</span>
+      <div class="desc">${s.desc}</div>
+      <div class="edit-form">
+        <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
+        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">아직 기록이 없어요. ✨</div>'}
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
+        <input type="date" id="${s.key}d" value="${getTodayKST()}">
+        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
+        <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
+        <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
+        <button onclick="save('${s.key}', event)">기록하기 💚</button>
       </div>
-    </div>
-    <div class="desc">${s.desc}</div>
-    <div class="edit-form">
-      <div style="font-size:12px; color:var(--sub); margin-bottom:8px;">최근 구매 이력 (최대 3건)</div>
-      ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px;">이력이 없습니다.</div>'}
-      <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
-      <input type="date" id="${s.key}d" value="${getTodayKST()}">
-      <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
-      <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
-      <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
-      <button onclick="save('${s.key}', event)">💚 남겨두기</button>
-    </div>
-  `;
-  wrap.appendChild(card);
-});
+    `;
+    wrap.appendChild(card);
+  });
+  
   
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
@@ -253,7 +343,16 @@ function getDailyMessage() {
   const key = "minty_msg_" + getTodayKST();
   let msg = localStorage.getItem(key);
   if (!msg) {
-    const msgs = ["🌱 오늘은 명상하기 좋은 날", "🏃‍♂️ 천천히 가도 괜찮아", "💚 오늘의 하루는 유난히 너에게 다정할거야", "💫 민티야, 오늘도 잘 챙겨 먹자", "✨ 가장 소중한 건 바로 너", "🌸 네가 걷는 모든 길에 꽃이 피길", "🐋 민티의 하루가 잔잔한 윤슬처럼 빛나길"];
+const msgs = [
+  "🌱 오늘은 명상하기 좋은 날", 
+  "🏃‍♂️ 천천히 가도 괜찮아", 
+  "💚 오늘의 하루는 유난히 너에게 다정할거야", 
+  "💫 민티야, 오늘도 잘 챙겨 먹자", 
+  "✨ 가장 소중한 건 바로 너", 
+  "🌸 네가 걷는 모든 길에 꽃이 피길", 
+  "🐋 민티의 하루가 잔잔한 윤슬처럼 빛나길",
+  "🌙 민티의 오늘 밤도 평안하길"
+];
     msg = msgs[Math.floor(Math.random() * msgs.length)];
     localStorage.setItem(key, msg);
   }
@@ -284,6 +383,30 @@ function save(k, e) {
   set(k, prev);
   render();
 
+if (navigator && navigator.vibrate) {
+  navigator.vibrate(10);
+}
+
+const successMsg = document.createElement('div');
+successMsg.classList.add('toast-success');
+successMsg.textContent = '💚 기록 완료!';
+successMsg.style.cssText = `
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background:  #A3B18A;
+  color: white;
+  padding: 16px 32px;
+  border-radius: 20px;
+  font-weight: 600;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  animation: fadeInOut 1.5s ease;
+`;
+document.body.appendChild(successMsg);
+setTimeout(() => successMsg.remove(), 1500);
+
 const qIn = document.getElementById(k + "q");
 const tIn = document.getElementById(k + "total");
 if(qIn) qIn.value = "";
@@ -294,9 +417,35 @@ setTimeout(() => {
 }, 300);
 }
 
-function start() { localStorage.setItem("minty_started", "yes"); document.getElementById("overlay").style.display = "none"; }
-if (!localStorage.getItem("minty_started")) document.getElementById("overlay").style.display = "flex";
+function start() {
+  const overlay = document.getElementById("overlay");
+  overlay.classList.remove("show");
+  setTimeout(() => {
+    overlay.style.display = "none";
+  }, 300);
+}
+
+// 초기 실행
 render();
+
+// 의도대로 앱을 켤 때마다 항상 오버레이(시작화면)가 뜨도록 설정
+const overlayEl = document.getElementById("overlay");
+overlayEl.style.display = "flex";
+requestAnimationFrame(() => overlayEl.classList.add("show"));
+
+// 아이폰 빈 곳 터치 시 키보드 닫기 (UX 최적화)
+document.addEventListener('click', (e) => {
+  if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+    document.activeElement.blur();
+
+    // 열린 카드 닫기
+    document.querySelectorAll('.card.open').forEach(c => {
+      c.classList.remove('open');
+    });
+  }
+}, { passive: true });
+
+
 </script>
 </body>
 </html>
