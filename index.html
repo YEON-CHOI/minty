@@ -89,10 +89,10 @@ button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; 
 
 <script>
 const supplements = [
-  { key: "pro", name: "유산균", icon: '🦠', desc: "아침 공복, 따뜻한 물과 함께" },
-  { key: "vit", name: "종합비타민", icon: '💊', desc: "점심먹고, 잊지 말고 챙기기" },
-  { key: "omg", name: "오메가3", icon: '🐟', desc: "점심먹고, 잊지 말고 챙기기" },
-  { key: "col", name: "콜라겐", icon: '✨', desc: "오늘 하루를 마무리하며" }
+  { key: "pro", name: "유산균", icon: '🦠', desc: "민티의 시작이 조금 더 가벼워지기를" },
+  { key: "vit", name: "종합비타민", icon: '💊', desc: "민티의 하루가 조금 더 든든해지기를" },
+  { key: "omg", name: "오메가3", icon: '🐟', desc: "민티의 마음이 조금 더 유연해지기를" },
+  { key: "col", name: "콜라겐", icon: '✨', desc: "민티의 내일이 조금 더 반짝이기를" }
 ];
 
 function getTodayKST() {
@@ -171,7 +171,7 @@ function render() {
 
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
-  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : "✨ 모든 영양제가 충분해요!";
+  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : "기분 좋은 바람처럼 모든 게 충분한 민티의 하루 ✨";
   document.getElementById("today-footer").innerText = displayDate;
 }
 
