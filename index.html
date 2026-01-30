@@ -84,7 +84,7 @@ button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; 
   </div>
 </div>
 
-<h1>🌿 민티의 하루 🌿</h1>
+<h1 onclick="handleEasterEgg()">🌿 민티의 하루 🌿</h1>
 <div class="subtitle">오늘도 행복할 민티를 위해 ☺️</div>
 <div id="status" class="status"></div>
 <div id="cards"></div>
@@ -97,6 +97,8 @@ button { background:var(--accent); color:#fff; font-weight:600; cursor:pointer; 
 </footer>
 
 <script>
+let titleClickCount = 0;
+let titleClickTimer;
 const supplements = [
   { key: "pro", name: "유산균", icon: '🦠', desc: "민티의 시작이 조금 더 가벼워지기를" },
   { key: "vit", name: "종합비타민", icon: '💊', desc: "민티의 하루가 조금 더 든든해지기를" },
@@ -156,11 +158,20 @@ function render() {
     let historyHtml = "";
     if (d.history && d.history.length > 0) {
       historyHtml = `<div class="history-container">`;
-      d.history.slice(0, 3).forEach(h => {
-        historyHtml += `<div class="history-item"><span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span><span>${h.qty}개 충전</span></div>`;
-      });
-      historyHtml += `</div>`;
-    }
+      d.history.slice(0, 3).forEach(h, index) => {
+    const undoBtn = index === 0 ? 
+        `<span onclick="undo('${s.key}', event)" style="margin-left:auto; font-size:10px; color:var(--sub); background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:10px; cursor:pointer;">🫧 되돌리기</span>` 
+        : "";
+      
+      historyHtml += `
+        <div class="history-item" style="display:flex; align-items:center;">
+          <span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span>
+          <span style="margin-left:8px;">${h.qty}개 충전</span>
+          ${undoBtn}
+        </div>`;
+    });
+    historyHtml += `</div>`;
+  }
 
     const card = document.createElement("div");
     card.className = `card ${isWarn ? 'warn' : ''}`;
@@ -233,6 +244,19 @@ function save(k, e) {
   if (navigator.vibrate) navigator.vibrate(10);
 }
 
+function undo(k, e) {
+  e.stopPropagation(); // 카드가 닫히지 않게 방지
+  if(!confirm("마지막 충전 기록을 취소할까요? 🩵")) return;
+
+  const data = get(k);
+  if (data && data.history && data.history.length > 0) {
+    const lastAction = data.history.shift(); // 가장 최근 기록 꺼내기
+    data.total = Math.max(0, data.total - lastAction.qty); // 충전했던 만큼 다시 빼기
+    set(k, data);
+    render(); // 화면 새로고침
+  }
+}
+  
 function showToast() {
   // 기존 토스트 로직 유지 후 하트 생성 코드 추가
   for (let i = 0; i < 8; i++) {
@@ -267,6 +291,18 @@ document.addEventListener('click', (e) => {
     document.querySelectorAll('.card.open').forEach(c => c.classList.remove('open'));
   }
 });
+  function handleEasterEgg() {
+  titleClickCount++;
+  
+  // 1초 동안 클릭이 없으면 횟수 초기화 (연속 클릭 유도)
+  clearTimeout(titleClickTimer);
+  titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 1000);
+
+  if (titleClickCount === 5) {
+    alert("민티야, 그거 알아? 내가 너를 정말 많이 좋아해");
+    titleClickCount = 0;
+  }
+}
 </script>
 </body>
 </html>
