@@ -139,7 +139,8 @@ function render() {
   wrap.innerHTML = "";
   let warnCount = 0;
   const todayKST = getTodayKST();
-  const displayDate = todayKST.replace(/-/g, '. ') + '.';
+  const dateParts = todayKST.split('-'); // ['2026', '01', '30'] 으로 분리
+const displayDateFull = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
 
   supplements.forEach(s => {
     const d = get(s.key) || { total: 0, lastDate: todayKST, history: [] };
