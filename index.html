@@ -139,8 +139,9 @@ function render() {
   wrap.innerHTML = "";
   let warnCount = 0;
   const todayKST = getTodayKST();
-  const dateParts = todayKST.split('-'); // ['2026', '01', '30'] 으로 분리
-const displayDateFull = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
+  const dateParts = todayKST.split('-'); // ['2026', '01', '30'] 분리
+  const displayDateFull = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
+  const displayDateShort = `${dateParts[1]}월 ${dateParts[2]}일`; // 카드 내부용
 
   supplements.forEach(s => {
     const d = get(s.key) || { total: 0, lastDate: todayKST, history: [] };
@@ -161,16 +162,18 @@ const displayDateFull = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}�
 
     const card = document.createElement("div");
     card.className = `card ${isWarn ? 'warn' : ''}`;
-    card.onclick = (e) => {
-      if (e.target.closest('.edit-form')) return;
-      const isOpen = card.classList.contains('open');
-      document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
-      if (!isOpen) card.classList.add('open');
-      setTimeout(() => {
+card.onclick = (e) => {
+  if (e.target.closest('.edit-form')) return;
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+
+  if (!isOpen) {
+    card.classList.add('open');
+    setTimeout(() => {
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 300); 
   }
-    };
+};
 
     card.innerHTML = `
       <div class="card-header">
@@ -186,7 +189,7 @@ const displayDateFull = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}�
         ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px; opacity:0.6;">아직 남겨진 게 없어요. ✨</div>'}
         
         <div style="font-size:12px; color:var(--sub); margin-bottom:4px">오늘 담은 마음</div>
-        <div class="date-display">${displayDate}</div>
+        <div class="date-display">${displayDateShort}</div>
         <input type="number" inputmode="numeric" placeholder="개수" id="${s.key}q">
         
         <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재에 맞춰두기</div>
@@ -227,7 +230,7 @@ function save(k, e) {
   if (navigator.vibrate) navigator.vibrate(10);
 }
 
-function showToast() {{
+function showToast() {
   // 기존 토스트 로직 유지 후 하트 생성 코드 추가
   for (let i = 0; i < 8; i++) {
     const heart = document.createElement('div');
