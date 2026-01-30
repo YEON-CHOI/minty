@@ -158,20 +158,21 @@ function render() {
     let historyHtml = "";
     if (d.history && d.history.length > 0) {
       historyHtml = `<div class="history-container">`;
-      d.history.slice(0, 3).forEach(h, index) => {
-    const undoBtn = index === 0 ? 
-        `<span onclick="undo('${s.key}', event)" style="margin-left:auto; font-size:10px; color:var(--sub); background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:10px; cursor:pointer;">🫧 되돌리기</span>` 
-        : "";
-      
-      historyHtml += `
-        <div class="history-item" style="display:flex; align-items:center;">
-          <span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span>
-          <span style="margin-left:8px;">${h.qty}개 충전</span>
-          ${undoBtn}
-        </div>`;
-    });
-    historyHtml += `</div>`;
-  }
+      // ⬇️ 여기 (h, index) 처럼 괄호가 반드시 있어야 합니다!
+      d.history.slice(0, 3).forEach((h, index) => { 
+        const undoBtn = index === 0 ? 
+          `<span onclick="undo('${s.key}', event)" style="margin-left:auto; font-size:10px; color:var(--sub); background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:10px; cursor:pointer;">🫧 되돌리기</span>` 
+          : "";
+        
+        historyHtml += `
+          <div class="history-item" style="display:flex; align-items:center;">
+            <span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span>
+            <span style="margin-left:8px;">${h.qty}개 충전</span>
+            ${undoBtn}
+          </div>`;
+      });
+      historyHtml += `</div>`;
+    }
 
     const card = document.createElement("div");
     card.className = `card ${isWarn ? 'warn' : ''}`;
