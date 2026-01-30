@@ -41,7 +41,14 @@ h1 { display: block; width: fit-content; margin: 30px auto 0; padding: 12px 28px
 @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 .stock strong { font-size:26px; font-weight:700; color: var(--accent); }
 .stock.warn strong { color:var(--warn-strong); }
-
+@keyframes heartPop {
+  0% { transform: scale(0) translateY(0) rotate(0); opacity: 1; }
+  100% { transform: scale(1.2) translateY(-100px) rotate(45deg); opacity: 0; }
+}
+.heart-particle {
+  position: fixed; pointer-events: none; z-index: 10001; font-size: 20px;
+  animation: heartPop 1s ease-out forwards;
+}
 /* 최근 이력 스타일 */
 .history-container { background: rgba(0,0,0,0.03); border-radius: 12px; padding: 12px; margin: 10px 0 15px; }
 @media (prefers-color-scheme: dark) { .history-container { background: rgba(255,255,255,0.05); } }
@@ -113,6 +120,21 @@ function get(k){ return JSON.parse(localStorage.getItem('minty_'+k)); }
 function set(k,v){ localStorage.setItem('minty_'+k, JSON.stringify(v)); }
 
 function render() {
+   const randomMessages = [
+      "🌱 오늘은 명상하기 좋은 날", 
+      "🏃‍♂️ 네가 걷는 모든 길을 응원해", 
+      "🍀 오늘의 하루는 유난히 너에게 다정할거야", 
+      "💫 눈부신 새벽의 샛별같은 너", 
+      "☀️ 세상에서 가장 소중한 너", 
+      "🌸 네가 걷는 모든 길에 꽃이 피길", 
+      "🌊 민티의 오늘이 잔잔한 윤슬처럼 빛나길",
+      "🌙 민티의 오늘 밤이 포근하길",
+      "🩵 기록 속에 담긴 내 진심이 너에게 닿기를",
+      "🤭 네가 웃을 때 나는 가장 행복해",
+      "🧚‍♀️ 기분좋은 바람처럼 완벽한 하루가 될거야"
+  ];
+// 이전에 선언된 게 있다면 무작위로 하나 선택
+  const randomMsg = randomMessages[Math.floor(Math.random() * randomMessages.length)];
   const wrap = document.getElementById("cards");
   wrap.innerHTML = "";
   let warnCount = 0;
@@ -131,7 +153,7 @@ function render() {
     if (d.history && d.history.length > 0) {
       historyHtml = `<div class="history-container">`;
       d.history.slice(0, 3).forEach(h => {
-        historyHtml += `<div class="history-item"><span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span><span>${h.qty}개 추가</span></div>`;
+        historyHtml += `<div class="history-item"><span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span><span>${h.qty}개 구매</span></div>`;
       });
       historyHtml += `</div>`;
     }
@@ -143,6 +165,10 @@ function render() {
       const isOpen = card.classList.contains('open');
       document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
       if (!isOpen) card.classList.add('open');
+      setTimeout(() => {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300); 
+  }
     };
 
     card.innerHTML = `
@@ -155,24 +181,23 @@ function render() {
       </div>
       <div style="font-size:12px; color:var(--sub); margin:4px 0 14px;">${s.desc}</div>
       <div class="edit-form">
-        <div style="font-size:12px; color:var(--sub); margin-bottom:4px;">최근 구매 이력 (최대 3건)</div>
-        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px; opacity:0.6;">아직 기록이 없어요. ✨</div>'}
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px;">쌓아온 날들</div>
+        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px; opacity:0.6;">아직 남겨진 게 없어요. ✨</div>'}
         
-        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">새로운 구매 추가</div>
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">오늘 담은 마음</div>
         <div class="date-display">${displayDate}</div>
-        <input type="number" inputmode="numeric" placeholder="구매 수량" id="${s.key}q">
+        <input type="number" inputmode="numeric" placeholder="개수" id="${s.key}q">
         
-        <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재 실재고 보정</div>
-        <input type="number" inputmode="numeric" placeholder="실재고 수정" id="${s.key}total">
-        <button onclick="save('${s.key}', event)">기록하기 🩵</button>
+        <div style="font-size:12px; color:var(--sub); margin:12px 0 4px">현재에 맞춰두기</div>
+        <input type="number" inputmode="numeric" placeholder="현재 개수" id="${s.key}total">
+        <button onclick="save('${s.key}', event)">충전하기 🩵</button>
       </div>`;
     wrap.appendChild(card);
   });
 
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
-  st.innerText = warnCount ? `⚠️ 준비가 필요한 영양제가 ${warnCount}개 있어요` : "기분 좋은 바람처럼 모든 게 충분한 민티의 하루 ✨";
-  document.getElementById("today-footer").innerText = displayDate;
+  st.innerText = warnCount ? `⚠️ 민티를 위해 다시 채워줄 조각이 ${warnCount}개 필요해요` : randomMsg;
 }
 
 function save(k, e) {
@@ -201,10 +226,20 @@ function save(k, e) {
   if (navigator.vibrate) navigator.vibrate(10);
 }
 
-function showToast() {
+function showToast() {{
+  // 기존 토스트 로직 유지 후 하트 생성 코드 추가
+  for (let i = 0; i < 8; i++) {
+    const heart = document.createElement('div');
+    heart.className = 'heart-particle';
+    heart.innerText = i % 2 === 0 ? '🩵' : '💕';
+    heart.style.left = (50 + (Math.random() * 40 - 20)) + '%'; // 화면 중앙 근처 랜덤
+    heart.style.top = (50 + (Math.random() * 20 - 10)) + '%';
+    document.body.appendChild(heart);
+    setTimeout(() => heart.remove(), 1000);
+  }
   const t = document.createElement('div');
   t.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#A3B18A; color:#fff; padding:16px 32px; border-radius:20px; z-index:10000; animation:fadeInOut 1.5s ease; pointer-events:none; font-weight:600; box-shadow: 0 8px 24px rgba(0,0,0,0.2);";
-  t.innerText = "🩵 기록 완료!";
+  t.innerText = "🩵 충전 완료!";
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 1500);
 }
