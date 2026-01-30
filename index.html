@@ -155,7 +155,7 @@ function render() {
     if (d.history && d.history.length > 0) {
       historyHtml = `<div class="history-container">`;
       d.history.slice(0, 3).forEach(h => {
-        historyHtml += `<div class="history-item"><span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span><span>${h.qty}개 구매</span></div>`;
+        historyHtml += `<div class="history-item"><span>📦 ${h.date.slice(5).replace('-', '월 ')}일</span><span>${h.qty}개 충전</span></div>`;
       });
       historyHtml += `</div>`;
     }
