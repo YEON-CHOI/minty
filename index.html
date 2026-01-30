@@ -200,9 +200,9 @@ card.onclick = (e) => {
       <div style="font-size:12px; color:var(--sub); margin:4px 0 14px;">${s.desc}</div>
       <div class="edit-form">
         <div style="font-size:12px; color:var(--sub); margin-bottom:4px;">쌓아온 날들</div>
-        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px; opacity:0.6;">아직 남겨진 게 없어요. ✨</div>'}
+        ${historyHtml || '<div style="font-size:11px; color:var(--sub); margin-bottom:15px; opacity:0.6;">아직 남겨진 마음이 없어요. ✨</div>'}
         
-        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">오늘 담은 마음</div>
+        <div style="font-size:12px; color:var(--sub); margin-bottom:4px">오늘 남긴 마음</div>
         <div class="date-display">${displayDateShort}</div>
         <input type="number" inputmode="numeric" placeholder="개수" id="${s.key}q">
         
@@ -237,7 +237,7 @@ function save(k, e) {
     prev.total = current + q;
     prev.lastDate = today;
     prev.history = [{ date: today, qty: q }, ...(prev.history||[])].slice(0,10);
-  } else { alert("수량을 입력해주세요 🩵"); return; }
+  } else { alert("개수를 남겨주세요 🩵"); return; }
 
   set(k, prev);
   render();
@@ -300,7 +300,7 @@ document.addEventListener('click', (e) => {
   titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 1000);
 
   if (titleClickCount === 5) {
-    alert("민티야, 그거 알아? 내가 너를 정말 많이 좋아해");
+    alert("민티야, 그거 알아? 내가 너를 정말 많이 좋아해🩵");
     titleClickCount = 0;
   }
 }
