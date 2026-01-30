@@ -247,7 +247,7 @@ function save(k, e) {
 
 function undo(k, e) {
   e.stopPropagation(); // 카드가 닫히지 않게 방지
-  if(!confirm("마지막 충전 기록을 취소할까요? 🩵")) return;
+  if(!confirm("방금 남긴 마음을 다시 되돌릴까요? 🩵")) return;
 
   const data = get(k);
   if (data && data.history && data.history.length > 0) {
