@@ -202,6 +202,7 @@ card.onclick = (e) => {
   const st = document.getElementById("status");
   st.className = "status" + (warnCount ? " warn" : "");
   st.innerText = warnCount ? `⚠️ 민티를 위해 다시 채워줄 조각이 ${warnCount}개 필요해요` : randomMsg;
+  document.getElementById("today-footer").innerText = displayDateFull;
 }
 
 function save(k, e) {
